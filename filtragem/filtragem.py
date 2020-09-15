@@ -29,14 +29,20 @@ cv2.imshow('img awgn', img_awgn)
 cv2.waitKey()
 
 # Filtro NLM
-nlm_denoised = cv2.fastNlMeansDenoising(img_awgn, h=52)
-io.imsave('nlm_h_52.jpg', nlm_denoised)
+nlm_denoised = cv2.fastNlMeansDenoising(img_awgn, h=9)
+print("PSNR NLM  = " + str(cv2.PSNR(img_grayscale, nlm_denoised)) + " dB")
+print("MSE       = " + str(mean_squared_error(img_grayscale, nlm_denoised)))
+io.imsave('nlm_h_9.jpg', nlm_denoised)
 
-nlm_denoised2 = cv2.fastNlMeansDenoising(img_awgn, h=9)
-io.imsave('nlm_h_9.jpg', nlm_denoised2)
+nlm_denoised2 = cv2.fastNlMeansDenoising(img_awgn, h=31)
+print("PSNR NLM2 = " + str(cv2.PSNR(img_grayscale, nlm_denoised2)) + " dB")
+print("MSE       = " + str(mean_squared_error(img_grayscale, nlm_denoised2)))
+io.imsave('nlm_h_31.jpg', nlm_denoised2)
 
-print("PSNR NLM = " + str(cv2.PSNR(img_grayscale, nlm_denoised)) + " dB")
-print("MSE      = " + str(mean_squared_error(img_grayscale, nlm_denoised2)))
+nlm_denoised3 = cv2.fastNlMeansDenoising(img_awgn, h=52)
+print("PSNR NLM3 = " + str(cv2.PSNR(img_grayscale, nlm_denoised3)) + " dB")
+print("MSE       = " + str(mean_squared_error(img_grayscale, nlm_denoised3)))
+io.imsave('nlm_h_52.jpg', nlm_denoised3)
 print("-----------------------------------------------")
 
 # Filtro bilateral
