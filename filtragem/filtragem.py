@@ -1,9 +1,7 @@
-import numpy as np
-from skimage import io, img_as_float, img_as_ubyte
-from skimage.metrics import peak_signal_noise_ratio
-from cv2 import cv2
-from math import log10, sqrt 
+from skimage         import io
 from sklearn.metrics import mean_squared_error
+from cv2             import cv2
+import numpy as np
 
 # Add ruido branco com media = mean e desvio padrao = std_dev na imagem passada como parametro
 def add_gaussian_noise2(image, mean=0, std_dev=1):
