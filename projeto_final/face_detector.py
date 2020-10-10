@@ -12,6 +12,6 @@ class face_detector:
         gray  = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, scaleFactor, minNeighbors)
 
-        return True if len(faces) != 0 else False
-        
+        return (True, faces) if len(faces) != 0 else (False, None)
+
         # TODO: Gerar nova imagem de acordo com as coordernadas retornadas
