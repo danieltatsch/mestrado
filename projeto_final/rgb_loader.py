@@ -1,6 +1,6 @@
 import json
-from cv2    import cv2
-from pprint import pprint
+from   cv2    import cv2
+from   pprint import pprint
 
 class rgb_loader:
     def __init__(self, rap3df_database_path):
@@ -24,17 +24,12 @@ class rgb_loader:
     def get_rgb_front_dict(self):
         return self.rgb_front_dict
 
-    def get_rgb_front_pictures(self):
+    def get_rgb_pictures(self, position):
         rgb_front_pictures = {}
 
         for key, value in list(self.rgb_front_dict.items()):
             rgb_front_pictures[key] = {}
 
-            rgb_front_pictures[key]['front']  = cv2.imread(value['front'], cv2.COLOR_BGR2RGB)
-            rgb_front_pictures[key]['left']   = cv2.imread(value['left'], cv2.COLOR_BGR2RGB)
-            rgb_front_pictures[key]['right']  = cv2.imread(value['right'], cv2.COLOR_BGR2RGB)
-            rgb_front_pictures[key]['up']     = cv2.imread(value['up'], cv2.COLOR_BGR2RGB)
-            rgb_front_pictures[key]['down']   = cv2.imread(value['down'], cv2.COLOR_BGR2RGB)
-            rgb_front_pictures[key]['burned'] = cv2.imread(value['burned'], cv2.COLOR_BGR2RGB)
+            rgb_front_pictures[key][position]  = cv2.imread(value[position], cv2.COLOR_BGR2RGB)
 
         return rgb_front_pictures
