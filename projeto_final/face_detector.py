@@ -2,7 +2,7 @@ import numpy as np
 from   cv2 import cv2
 
 class face_detector:
-    def __init__(self, face_training_path='haarcascade_frontalface_default.xml'):
+    def __init__(self, face_training_path='arquivos_treinamento/haarcascade_frontalface_default.xml'):
         self.face_cascade = cv2.CascadeClassifier(face_training_path)
 
     # scaleFactor  - Especifica quanto a img eh reduzida para cada escala gerada (verificar funcionamento do algoritmo) 
