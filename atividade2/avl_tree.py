@@ -36,6 +36,21 @@ class AvlTree:
 
         return self.height
 
+    def update_bf(self):
+        height_left  = 0
+        height_right = 0
+
+        if self.left is None and self.right is None:
+            self.bf = 0
+        if self.left is not None:
+            self.left.update_bf()
+            height_left = self.left.height
+        if self.right is not None:
+            self.right.update_bf()
+            height_right = self.right.height
+
+        self.bf = height_left - height_right
+
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
