@@ -1,10 +1,10 @@
 class AvlTree:
-    def __init__(self, data=None, father=None, left=None, right=None):
+    def __init__(self, data=None, left=None, right=None):
         self.data   = data
-        self.father = father
         self.left   = left
         self.right  = right
         self.bf     = 0
+        self.height = 0
 
     def insert(self, data):
         if self.data is None:
@@ -19,6 +19,22 @@ class AvlTree:
                 self.right = AvlTree(data)
             else:
                 self.right.insert(data)
+
+    def update_height(self):
+        height_left  = 0
+        height_right = 0
+
+        if self.left is None and self.right is None:
+            self.height = 0
+            return 0
+        if self.left is not None:
+            height_left = self.left.update_height()
+        if self.right is not None:
+            height_right = self.right.update_height()
+
+        self.height = 1 + max(height_left, height_right)
+
+        return self.height
 
     def display(self):
         lines, *_ = self._display_aux()
