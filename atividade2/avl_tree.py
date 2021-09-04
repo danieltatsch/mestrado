@@ -20,15 +20,6 @@ class AvlTree:
             else:
                 self.right.insert(data)
 
-    def print_tree(self, indent = 0):
-        print(" " * indent + str(self.data))
-        
-        if self.left:
-            self.left.print_tree(indent - 2)
-        
-        if self.right:
-            self.right.print_tree(indent + 2)
-
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
