@@ -21,12 +21,12 @@ class AvlTree:
                 self.right.insert(data)
 
     def update_height(self):
-        height_left  = 0
-        height_right = 0
+        height_left  = 1
+        height_right = 1
 
         if self.left is None and self.right is None:
-            self.height = 0
-            return 0
+            self.height = 1
+            return 1
         if self.left is not None:
             height_left = self.left.update_height()
         if self.right is not None:
