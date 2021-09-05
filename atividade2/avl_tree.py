@@ -61,6 +61,31 @@ class AvlTree:
         self.data  = self.left.data
         self.left  = self.left.left
 
+    def balance(self, neg_bf_desired, pos_bf_desired, parent = None):
+        if self.left is not None:
+            self.left.balance(neg_bf_desired, pos_bf_desired, self)
+        if self.right is not None:
+            self.right.balance(neg_bf_desired, pos_bf_desired, self)
+
+        if parent is None:
+            parent = self
+
+        if parent.bf < neg_bf_desired or parent.bf > pos_bf_desired:
+            while self.bf < neg_bf_desired or self.bf > pos_bf_desired:
+                if self.bf > pos_bf_desired:
+                    if self.left.bf < 0:
+                        self.left.rotate_left()
+                    self.rotate_right()
+                elif self.bf < neg_bf_desired:
+                    if self.right.bf > 0:
+                        self.right.rotate_right()
+                    self.rotate_left()
+
+                self.update_height()
+                self.update_bf()
+                parent.update_height()
+                parent.update_bf()
+
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
