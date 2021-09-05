@@ -51,6 +51,16 @@ class AvlTree:
 
         self.bf = height_left - height_right
 
+    def rotate_left(self):
+        self.left  = AvlTree(self.data, self.left, self.right.left)
+        self.data  = self.right.data
+        self.right = self.right.right
+
+    def rotate_right(self):
+        self.right = AvlTree(self.data, self.left.right, self.right)
+        self.data  = self.left.data
+        self.left  = self.left.left
+
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
