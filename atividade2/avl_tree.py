@@ -1,24 +1,26 @@
 class AvlTree:
-    def __init__(self, data=None, left=None, right=None):
-        self.data   = data
+    def __init__(self, key=None, value=None, left=None, right=None):
+        self.key    = key
+        self.value  = value
         self.left   = left
         self.right  = right
         self.bf     = 0
         self.height = 0
 
-    def insert(self, data):
-        if self.data is None:
-            self.data = data
-        elif data < self.data:
+    def insert(self, key, value):
+        if self.key is None:
+            self.key   = key
+            self.value = value
+        elif key < self.key:
             if self.left is None:
-                self.left = AvlTree(data)
+                self.left = AvlTree(key, value)
             else:
-                self.left.insert(data)
-        elif data > self.data:
+                self.left.insert(key, value)
+        elif key > self.key:
             if self.right is None:
-                self.right = AvlTree(data)
+                self.right = AvlTree(key, value)
             else:
-                self.right.insert(data)
+                self.right.insert(key, value)
 
     def update_height(self):
         height_left  = 1
@@ -51,45 +53,47 @@ class AvlTree:
 
         self.bf = height_left - height_right
 
-    def get_data(self, data):
+    def get(self, key):
         node = self
         while node is not None:
-            if node.data == data:
-                return node.data
+            if node.key == key:
+                return node.value
 
-            node = node.right if node.data < data else node.left
+            node = node.right if node.key < key else node.left
 
         return None
 
-    def get_data_recursive(self, data):
-        return (None                                if self.data is None                           else
-                self.data                           if self.data == data                           else
-                self.right.get_data_recursive(data) if self.data < data and self.right is not None else
-                self.left.get_data_recursive(data)  if self.data > data and self.left  is not None else
+    def get_recursive(self, key):
+        return (None                                if self.key is None                           else
+                self.value                          if self.key == key                           else
+                self.right.get_recursive(key) if self.key < key and self.right is not None else
+                self.left.get_recursive(key)  if self.key > key and self.left  is not None else
                 None)
 
-        # if self.data is None:
+        # if self.key is None:
         #     return None
 
-        # if self.data == data:
-        #     return self.data
+        # if self.key == key:
+        #     return self.key
 
-        # if self.data < data and self.right is not None:
-        #     return self.right.get_data_recursive(data)
+        # if self.key < key and self.right is not None:
+        #     return self.right.get_recursive(key)
 
-        # if self.data > data and self.left is not None:
-        #     return self.left.get_data_recursive(data)
+        # if self.key > key and self.left is not None:
+        #     return self.left.get_recursive(key)
 
         # return None
 
     def rotate_left(self):
-        self.left  = AvlTree(self.data, self.left, self.right.left)
-        self.data  = self.right.data
+        self.left  = AvlTree(self.key, self.value, self.left, self.right.left)
+        self.key   = self.right.key
+        self.value = self.right.value
         self.right = self.right.right
 
     def rotate_right(self):
-        self.right = AvlTree(self.data, self.left.right, self.right)
-        self.data  = self.left.data
+        self.right = AvlTree(self.key, self.value, self.left.right, self.right)
+        self.key   = self.left.key
+        self.value = self.left.value
         self.left  = self.left.left
 
     def balance(self, neg_bf_desired, pos_bf_desired, parent = None):
@@ -126,7 +130,7 @@ class AvlTree:
         """Returns list of strings, width, height, and horizontal coordinate of the root."""
         # No child.
         if self.right is None and self.left is None:
-            line = '%s' % self.data
+            line = '(%s, %s)' % (self.key, self.value)
             width = len(line)
             height = 1
             middle = width // 2
@@ -135,7 +139,7 @@ class AvlTree:
         # Only left child.
         if self.right is None:
             lines, n, p, x = self.left._display_aux()
-            s = '%s' % self.data
+            s = '(%s, %s)' % (self.key, self.value)
             u = len(s)
             first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s
             second_line = x * ' ' + '/' + (n - x - 1 + u) * ' '
@@ -145,7 +149,7 @@ class AvlTree:
         # Only right child.
         if self.left is None:
             lines, n, p, x = self.right._display_aux()
-            s = '%s' % self.data
+            s = '(%s, %s)' % (self.key, self.value)
             u = len(s)
             first_line = s + x * '_' + (n - x) * ' '
             second_line = (u + x) * ' ' + '\\' + (n - x - 1) * ' '
@@ -155,7 +159,7 @@ class AvlTree:
         # Two children.
         left, n, p, x = self.left._display_aux()
         right, m, q, y = self.right._display_aux()
-        s = '%s' % self.data
+        s = '(%s, %s)' % (self.key, self.value)
         u = len(s)
         first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s + y * '_' + (m - y) * ' '
         second_line = x * ' ' + '/' + (n - x - 1 + u + y) * ' ' + '\\' + (m - y - 1) * ' '
