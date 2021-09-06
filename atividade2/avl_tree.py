@@ -51,6 +51,37 @@ class AvlTree:
 
         self.bf = height_left - height_right
 
+    def get_data(self, data):
+        node = self
+        while node is not None:
+            if node.data == data:
+                return node.data
+
+            node = node.right if node.data < data else node.left
+
+        return None
+
+    def get_data_recursive(self, data):
+        return (None                                if self.data is None                           else
+                self.data                           if self.data == data                           else
+                self.right.get_data_recursive(data) if self.data < data and self.right is not None else
+                self.left.get_data_recursive(data)  if self.data > data and self.left  is not None else
+                None)
+
+        # if self.data is None:
+        #     return None
+
+        # if self.data == data:
+        #     return self.data
+
+        # if self.data < data and self.right is not None:
+        #     return self.right.get_data_recursive(data)
+
+        # if self.data > data and self.left is not None:
+        #     return self.left.get_data_recursive(data)
+
+        # return None
+
     def rotate_left(self):
         self.left  = AvlTree(self.data, self.left, self.right.left)
         self.data  = self.right.data
