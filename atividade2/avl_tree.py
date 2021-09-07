@@ -124,6 +124,8 @@ class AvlTree:
                 parent.update_height()
                 parent.update_bf()
 
+# https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
+
     def display(self):
         lines, *_ = self._display_aux()
         for line in lines:
