@@ -64,8 +64,8 @@ class AvlTree:
         return None
 
     def get_recursive(self, key):
-        return (None                                if self.key is None                           else
-                self.value                          if self.key == key                           else
+        return (None                          if self.key is None                           else
+                self.value                    if self.key == key                           else
                 self.right.get_recursive(key) if self.key < key and self.right is not None else
                 self.left.get_recursive(key)  if self.key > key and self.left  is not None else
                 None)
@@ -83,6 +83,9 @@ class AvlTree:
         #     return self.left.get_recursive(key)
 
         # return None
+
+    def __getitem__(self, key):
+        return self.get_recursive(key)
 
     def rotate_left(self):
         self.left  = AvlTree(self.key, self.value, self.left, self.right.left)
