@@ -1,7 +1,7 @@
 ###################################### RULES ######################################
 # 1 - Nodes must be red or black
 # 2 - Root is always black
-# 3 - Leaves are always black
+# 3 - Leaves are always black (consider null leaves undisplayed)
 # 4 - If a node is red then all its children are black
 # 5 - If a node is red then its parent is black
 # 6 - Every path from a node to its leaves must have the same number of black nodes
@@ -26,29 +26,86 @@ class RBTree:
         if self.key is None:
             self.key   = key
             self.value = value
+            self.color = red if self.parent is not None else black
         elif key < self.key:
             if self.left is None:
                 self.left = RBTree(key, value, self, red)
 
                 if self.color is black:
-                    print("ok")
+                    return
                 else:
-                    self.left.update_color()
+                    self.left.balance()
             else:
                 self.left.insert(key, value)
         elif key > self.key:
             if self.right is None:
                 self.right = RBTree(key, value, self, red)
-                
+
                 if self.color is black:
-                    print("ok")
+                    return
                 else:
-                    self.right.update_color()
+                    self.right.balance()
             else:
                 self.right.insert(key, value)
 
-    def update_color(self):
-        pass
+    def balance(self):
+        grandparent = self.parent.parent
+
+        if grandparent.left is not None and grandparent.left == self.parent:
+
+            if grandparent.right is not None and grandparent.right.color is red:
+                grandparent.right.color = black
+                self.parent.color       = black
+
+                if grandparent.parent is not None:
+                    grandparent.color = red
+
+                    if grandparent.parent.color is red:
+                        grandparent.balance()
+            else:
+                self.parent.color = black
+                grandparent.color = red
+
+                if self == self.parent.right:
+                    self.parent.rotate_left()
+
+                grandparent.rotate_right()
+
+        else:
+            if grandparent.left is not None and grandparent.left.color is red:
+                grandparent.left.color  = black
+                self.parent.color       = black
+
+                if grandparent.parent is not None:
+                    grandparent.color = red
+                    
+                    if grandparent.parent.color is red:
+                        grandparent.balance()
+            else:
+                self.parent.color = black
+                grandparent.color = red       
+
+                if self == self.parent.left:
+                    self.parent.rotate_right()
+                
+                grandparent.rotate_left()
+
+        print('ATUAL: {}'.format(self.key))
+        if self.parent is not None:
+            print("Pai do {}: {}".format(self.key, self.parent.key))
+            grandparent = self.parent.parent
+            print("Avo do {}: {}".format(self.key, grandparent.key))
+
+            filho_esq = grandparent.left.key  if grandparent.left  is not None else None
+            filho_dir = grandparent.right.key if grandparent.right is not None else None
+
+            print("FILHOS DO AVO: {},{}".format(filho_esq, filho_dir))
+
+            irmao_esq = self.parent.left.key if self.parent.left is not None else None
+            irmao_dir = self.parent.right.key if self.parent.right is not None else None
+            
+            print("IRMAOS: {}, {}".format(irmao_esq, irmao_dir))
+            print('--------------------------------------')
 
     def get(self, key):
         node = self
@@ -71,16 +128,39 @@ class RBTree:
         return self.get_recursive(key)
 
     def rotate_left(self):
-        self.left  = RBTree(self.key, self.value, self.left, self.right.left)
-        self.key   = self.right.key
-        self.value = self.right.value
-        self.right = self.right.right
+        self.right.parent = self.parent
+        self.parent.right = self.right
+        self.left         = RBTree(self.key, self.value, self.right, self.color, self.left, self.right.left)
+        self.key          = self.right.key
+        self.value        = self.right.value
+        self.color        = self.right.color
+        self.right        = self.right.right
+        self.right.parent.left = self.left
 
     def rotate_right(self):
-        self.right = RBTree(self.key, self.value, self.left.right, self.right)
+        self.left.parent = self.parent
+        self.parent.left = self.left
+        # input(self.parent.left.key)
+        self.right = RBTree(self.key, self.value, self.left, self.color, self.left.right, self.right)
         self.key   = self.left.key
         self.value = self.left.value
+        self.color = self.left.color
         self.left  = self.left.left
+        self.left.parent.right = self.right
+
+    # def rotate_left(self):
+    #     self.left  = RBTree(self.key, self.value, self.right, self.color, self.left, self.right.left)
+    #     self.key   = self.right.key
+    #     self.value = self.right.value
+    #     self.color = self.right.color
+    #     self.right = self.right.right
+
+    # def rotate_right(self):
+    #     self.right = RBTree(self.key, self.value, self.left, self.color, self.left.right, self.right)
+    #     self.key   = self.left.key
+    #     self.value = self.left.value
+    #     self.color = self.left.color
+    #     self.left  = self.left.left
 
 # https://stackoverflow.com/questions/34012886/print-binary-tree-level-by-level-in-python
 
