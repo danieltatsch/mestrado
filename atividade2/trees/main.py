@@ -24,8 +24,28 @@ def avl_test():
     except:
         pass
 
+def rb_test():
+    bst = RedBlackTree()
+
+    bst.insert(55)
+    bst.insert(40)
+    bst.insert(65)
+    bst.insert(60)
+    bst.insert(75)
+    bst.insert(57)
+
+    # bst.print_tree()
+    bst.display()
+
+    print("\nAfter deleting an element")
+    bst.delete_node(40)
+    # bst.print_tree()
+    bst.display()
+
+
 def main():
-    avl_test()
+    # avl_test()
+    rb_test()
 
 if __name__ == "__main__":
     main()
