@@ -218,12 +218,29 @@ class Node():
         self.left = None
         self.right = None
         self.color = 1
+        self.height = 1
+
+    def update_height(self):
+        height_left  = 1
+        height_right = 1
+
+        if self.left is None and self.right is None:
+            self.height = 1
+            return 1
+        if self.left is not None:
+            height_left = self.left.update_height()
+        if self.right is not None:
+            height_right = self.right.update_height()
+
+        self.height = 1 + max(height_left, height_right)
+
+        return self.height
 
     def _display_aux(self):
         """Returns list of strings, width, height, and horizontal coordinate of the root."""
         # No child.
         if self.right is None and self.left is None:
-            line = colored('(%s)', 'red') % (self.item) if self.color == 1 else colored('(%s)', 'cyan') % (self.item)
+            line = colored('(%s, %s)', 'red') % (self.item, self.height) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.height)
             width = len(line)
             height = 1
             middle = width // 2
@@ -232,7 +249,7 @@ class Node():
         # Only left child.
         if self.right is None:
             lines, n, p, x = self.left._display_aux()
-            s = colored('(%s)', 'red') % (self.item) if self.color == 1 else colored('(%s)', 'cyan') % (self.item)
+            s = colored('(%s, %s)', 'red') % (self.item, self.height) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.height)
             u = len(s)
             first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s
             second_line = x * ' ' + '/' + (n - x - 1 + u) * ' '
@@ -242,7 +259,7 @@ class Node():
         # Only right child.
         if self.left is None:
             lines, n, p, x = self.right._display_aux()
-            s = colored('(%s)', 'red') % (self.item) if self.color == 1 else colored('(%s)', 'cyan') % (self.item)
+            s = colored('(%s, %s)', 'red') % (self.item, self.height) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.height)
             u = len(s)
             first_line = s + x * '_' + (n - x) * ' '
             second_line = (u + x) * ' ' + '\\' + (n - x - 1) * ' '
@@ -252,7 +269,7 @@ class Node():
         # Two children.
         left, n, p, x = self.left._display_aux()
         right, m, q, y = self.right._display_aux()
-        s = colored('(%s)', 'red') % (self.item) if self.color == 1 else colored('(%s)', 'cyan') % (self.item)
+        s = colored('(%s, %s)', 'red') % (self.item, self.height) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.height)
         u = len(s)
         first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s + y * '_' + (m - y) * ' '
         second_line = x * ' ' + '/' + (n - x - 1 + u + y) * ' ' + '\\' + (m - y - 1) * ' '
@@ -566,12 +583,14 @@ class RedBlackTree():
             return
 
         self.fix_insert(node)
+        self.root.update_height()
 
     def get_root(self):
         return self.root
 
     def delete_node(self, item):
         self.delete_node_helper(self.root, item)
+        self.root.update_height()
 
     def print_tree(self):
         self.__print_helper(self.root, "", True)
