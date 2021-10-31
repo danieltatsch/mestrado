@@ -64,7 +64,6 @@ class TreeNode(object):
         return lines, n + m + u, max(p, q) + 2, n + u // 2
 
 class AVLTree(object):
-
     # Function to insert a node
     def insert_node(self, root, key):
 
@@ -235,7 +234,10 @@ class Node():
         """Returns list of strings, width, height, and horizontal coordinate of the root."""
         # No child.
         if self.right is None and self.left is None:
-            line = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            try:
+                line = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            except:
+                line = '%s' % (self.key)
             width = len(line)
             height = 1
             middle = width // 2
@@ -244,7 +246,10 @@ class Node():
         # Only left child.
         if self.right is None:
             lines, n, p, x = self.left._display_aux()
-            s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            try:
+                s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            except:
+                s = '%s' % (self.key)
             u = len(s)
             first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s
             second_line = x * ' ' + '/' + (n - x - 1 + u) * ' '
@@ -254,7 +259,10 @@ class Node():
         # Only right child.
         if self.left is None:
             lines, n, p, x = self.right._display_aux()
-            s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            try:
+                s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+            except:
+                s = '%s' % (self.key)
             u = len(s)
             first_line = s + x * '_' + (n - x) * ' '
             second_line = (u + x) * ' ' + '\\' + (n - x - 1) * ' '
@@ -264,7 +272,10 @@ class Node():
         # Two children.
         left, n, p, x = self.left._display_aux()
         right, m, q, y = self.right._display_aux()
-        s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+        try:
+            s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
+        except:
+            s = '%s' % (self.key)
         u = len(s)
         first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s + y * '_' + (m - y) * ' '
         second_line = x * ' ' + '/' + (n - x - 1 + u + y) * ' ' + '\\' + (m - y - 1) * ' '
@@ -284,6 +295,7 @@ class RedBlackTree():
         self.TNULL.left = None
         self.TNULL.right = None
         self.root = self.TNULL
+        self.avl_tree = AVLTree()
 
     # Preorder
     def pre_order_helper(self, node):
@@ -557,13 +569,44 @@ class RedBlackTree():
 
         while x != self.TNULL:
             y = x
-            if node.item < x.item:
-                x = x.left
+
+            if isinstance(y, Node):
+                if node.item < x.item:
+                    x = x.left
+                else:
+                    x = x.right
             else:
-                x = x.right
+                if node.item < x.key:
+                    x = x.left
+                else:
+                    x = x.right
+                
+                if x is None:
+                    break
 
         node.parent = y
-        if y == None:
+
+        if isinstance(y, TreeNode): # se o pai eh AVL
+            print("Node {} -> AVL".format(node.item))
+            y = self.avl_tree.insert_node(y, key)
+            y.display()
+            return
+
+        elif y is not None and y.depth >= 2:
+            print("Node RAIZ {} -> AVL".format(node.item))
+
+            if isinstance(y, Node): # se o pai eh RB
+                avl_node = None
+                avl_node = self.avl_tree.insert_node(avl_node, key)
+
+                if node.item < y.item:
+                    y.left = avl_node
+                else:
+                    y.right = avl_node
+
+                return
+
+        if y is None:
             self.root = node
         elif node.item < y.item:
             y.left = node
@@ -578,11 +621,6 @@ class RedBlackTree():
             return
 
         self.fix_insert(node)
-
-        if (node.parent is not None and node.parent.parent is not None and node.parent.parent.parent is not None):
-            # TODO: Turn node to AVL
-            pass
-
         self.root.update_depth()
 
     def get_root(self):
