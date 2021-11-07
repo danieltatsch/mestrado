@@ -32,16 +32,59 @@ def rb_test():
     bst.insert(65)
     bst.insert(60)
     bst.insert(75)
+    bst.insert(56)
+
+    # bst.print_tree()
+    bst.display()
+
+    print("\nAfter inserting one more element 57")
     bst.insert(57)
-
-    # bst.print_tree()
     bst.display()
 
-    print("\nAfter deleting an element")
-    bst.delete_node(40)
-    # bst.print_tree()
+    print("\nAfter inserting one more element 58")
+    bst.insert(58)
     bst.display()
 
+    print("\nAfter inserting one more element 59")
+    bst.insert(59)
+    bst.display()
+
+    print("\nAfter inserting one more element 57")
+    bst.insert(55)
+    bst.display()
+
+    print("\nAfter inserting one more element 57")
+    bst.insert(41)
+    bst.display()
+
+    print("\nAfter inserting one more element 58")
+    bst.insert(42)
+    bst.display()
+
+    print("\nAfter inserting one more element 59")
+    bst.insert(43)
+    bst.display()
+
+    print("\nAfter inserting one more element 57")
+    bst.insert(44)
+    bst.display()
+
+    print("\nAfter inserting one more element 57")
+    bst.insert(45)
+    bst.display()
+
+
+    # print("\nAfter deleting an element")
+    # bst.delete_node(40)
+    # bst.display()
+
+    # print("\nAfter deleting an element")
+    # bst.delete_node(55)
+    # bst.display()
+
+    # print("\nAfter deleting an element")
+    # bst.delete_node(65)
+    # bst.display()
 
 def main():
     # avl_test()
