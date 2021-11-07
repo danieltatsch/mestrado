@@ -573,33 +573,36 @@ class RedBlackTree():
 
         y = None
         x = self.root
+        avl_root_parent = None
 
         while x != self.TNULL:
             y = x
 
             if isinstance(y, Node):
+                avl_root_parent = y
+
                 if node.item < x.item:
                     x = x.left
                 else:
                     x = x.right
+
             else:
-                if node.item < x.key:
-                    x = x.left
+                print("Node {} -> AVL".format(node.item))
+                print("VALOR DE Y: {}".format(y.key))
+                y = self.avl_tree.insert_node(y, key)
+
+                if node.item < avl_root_parent.item:
+                    avl_root_parent.left = y
                 else:
-                    x = x.right
-                
-                if x is None:
-                    break
+                    avl_root_parent.right = y
+                return
+
+            if x is None:
+                break
 
         node.parent = y
 
-        if isinstance(y, TreeNode): # se o pai eh AVL
-            print("Node {} -> AVL".format(node.item))
-            y = self.avl_tree.insert_node(y, key)
-            y.display()
-            return
-
-        elif y is not None and y.depth >= 2:
+        if y is not None and y.depth >= 2:
             print("Node RAIZ {} -> AVL".format(node.item))
 
             if isinstance(y, Node): # se o pai eh RB
