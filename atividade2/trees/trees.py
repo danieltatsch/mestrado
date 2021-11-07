@@ -234,10 +234,12 @@ class Node():
         """Returns list of strings, width, height, and horizontal coordinate of the root."""
         # No child.
         if self.right is None and self.left is None:
-            try:
-                line = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
-            except:
-                line = '%s' % (self.key)
+            if isinstance(self, TreeNode):
+                self.display()
+                return
+            else:
+                line = '%s, RED' % self.item if self.color == 1 else '%s, BLACK' % self.item
+                # line = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
             width = len(line)
             height = 1
             middle = width // 2
@@ -246,10 +248,13 @@ class Node():
         # Only left child.
         if self.right is None:
             lines, n, p, x = self.left._display_aux()
-            try:
-                s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
-            except:
-                s = '%s' % (self.key)
+
+            if isinstance(self, TreeNode):
+                self.display()
+                return
+            else:
+                s = '%s, RED' % self.item if self.color == 1 else '%s, BLACK' % self.item
+                # s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
             u = len(s)
             first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s
             second_line = x * ' ' + '/' + (n - x - 1 + u) * ' '
@@ -259,10 +264,13 @@ class Node():
         # Only right child.
         if self.left is None:
             lines, n, p, x = self.right._display_aux()
-            try:
-                s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
-            except:
-                s = '%s' % (self.key)
+
+            if isinstance(self, TreeNode):
+                self.display()
+                return
+            else:
+                s = '%s, RED' % self.item if self.color == 1 else '%s, BLACK' % self.item
+                # s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
             u = len(s)
             first_line = s + x * '_' + (n - x) * ' '
             second_line = (u + x) * ' ' + '\\' + (n - x - 1) * ' '
@@ -272,10 +280,9 @@ class Node():
         # Two children.
         left, n, p, x = self.left._display_aux()
         right, m, q, y = self.right._display_aux()
-        try:
-            s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
-        except:
-            s = '%s' % (self.key)
+
+        s = '%s, RED' % self.item if self.color == 1 else '%s, BLACK' % self.item
+        # s = colored('(%s, %s)', 'red') % (self.item, self.depth) if self.color == 1 else colored('(%s, %s)', 'cyan') % (self.item, self.depth)
         u = len(s)
         first_line = (x + 1) * ' ' + (n - x - 1) * '_' + s + y * '_' + (m - y) * ' '
         second_line = x * ' ' + '/' + (n - x - 1 + u + y) * ' ' + '\\' + (m - y - 1) * ' '
