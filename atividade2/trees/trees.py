@@ -223,9 +223,9 @@ class Node():
         if self.parent is None:
             self.depth  = 0
         
-        if self.left is not None:
+        if self.left is not None and not isinstance(self.left, TreeNode):
             self.left.update_depth(depth + 1)
-        if self.right is not None:
+        if self.right is not None and not isinstance(self.left, TreeNode):
             self.right.update_depth(depth + 1)
 
         self.depth = depth
