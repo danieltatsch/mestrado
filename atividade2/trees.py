@@ -227,7 +227,7 @@ class AVLTree(object):
 ##############################################################################################
 
 # Node creation
-class Node():
+class RbNode():
     def __init__(self, item):
         self.item = item
         self.parent = None
@@ -241,10 +241,10 @@ class Node():
             self.depth  = 0
         
         if self.left is not None:
-            input_depth = depth + 1 if isinstance(self.left, Node) else 0
+            input_depth = depth + 1 if isinstance(self.left, RbNode) else 0
             self.left.update_depth(input_depth)
         if self.right is not None:
-            input_depth = depth + 1 if isinstance(self.right, Node) else 0
+            input_depth = depth + 1 if isinstance(self.right, RbNode) else 0
             self.right.update_depth(input_depth)
 
         self.depth = depth
@@ -316,7 +316,7 @@ class Node():
 
 class RedBlackTree():
     def __init__(self):
-        self.TNULL = Node(0)
+        self.TNULL = RbNode(0)
         self.TNULL.color = 0
         self.TNULL.left = None
         self.TNULL.right = None
@@ -457,20 +457,20 @@ class RedBlackTree():
 
     def avl2rb(self, node):
       if node != self.TNULL:
-        if node.left is not None and node.left != self.TNULL and isinstance(node.left, Node):
+        if node.left is not None and node.left != self.TNULL and isinstance(node.left, RbNode):
             self.avl2rb(node.left)
-        if node.right is not None and node.right != self.TNULL and isinstance(node.right, Node):
+        if node.right is not None and node.right != self.TNULL and isinstance(node.right, RbNode):
             self.avl2rb(node.right)
 
         avl_root_parent = node
 
-        if isinstance(avl_root_parent, Node):
+        if isinstance(avl_root_parent, RbNode):
             if isinstance(avl_root_parent.left, AvlNode):
                 if avl_root_parent.depth < 2:
                     old_left = avl_root_parent.left
                     avl_key  = self.avl_tree.getMaxValueNode(old_left).key
 
-                    new        = Node(avl_key)
+                    new        = RbNode(avl_key)
                     new.parent = avl_root_parent
                     new.right  = self.TNULL
 
@@ -485,7 +485,7 @@ class RedBlackTree():
                     old_right = avl_root_parent.right
                     avl_key   = self.avl_tree.getMinValueNode(old_right).key
 
-                    new        = Node(avl_key)
+                    new        = RbNode(avl_key)
                     new.parent = avl_root_parent
                     new.left   = self.TNULL
 
@@ -497,7 +497,7 @@ class RedBlackTree():
 
             self.root.update_depth()
 
-    # Node deletion
+    # RbNode deletion
     def delete_node_helper(self, node, key):
         z = self.TNULL
         avl_root_parent = None
@@ -704,7 +704,7 @@ class RedBlackTree():
         x.parent = y
 
     def insert(self, key):
-        node = Node(key)
+        node = RbNode(key)
         node.parent = None
         node.item = key
         node.left = self.TNULL
@@ -718,7 +718,7 @@ class RedBlackTree():
         while x != self.TNULL:
             y = x
 
-            if isinstance(y, Node):
+            if isinstance(y, RbNode):
                 avl_root_parent = y
 
                 if node.item < x.item:
@@ -744,7 +744,7 @@ class RedBlackTree():
 
         if y is not None and y.depth >= 2:
 
-            if isinstance(y, Node): # se o pai eh RB
+            if isinstance(y, RbNode): # se o pai eh RB
                 avl_node = None
                 avl_node = self.avl_tree.insert_node(avl_node, key)
 
