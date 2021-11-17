@@ -198,6 +198,11 @@ class AVLTree(object):
             return root
         return self.getMinValueNode(root.left)
 
+    def getMaxValueNode(self, root):
+        if root is None or root.right is None:
+            return root
+        return self.getMaxValueNode(root.right)
+
     def preOrder(self, root):
         if not root:
             return
