@@ -6,7 +6,7 @@ import colorama
 from   termcolor import colored
 import sys
 
-class TreeNode(object):
+class AvlNode(object):
     def __init__(self, key):
         self.key = key
         self.left = None
@@ -81,7 +81,7 @@ class AVLTree(object):
 
         # Find the correct location and insert the node
         if not root:
-            return TreeNode(key)
+            return AvlNode(key)
         elif key < root.key:
             root.left = self.insert_node(root.left, key)
         elif key > root.key:
@@ -253,7 +253,7 @@ class Node():
         """Returns list of strings, width, height, and horizontal coordinate of the root."""
         # No child.
         if self.right is None and self.left is None:
-            if isinstance(self, TreeNode):
+            if isinstance(self, AvlNode):
                 self.display()
                 return
             else:
@@ -268,7 +268,7 @@ class Node():
         if self.right is None:
             lines, n, p, x = self.left._display_aux()
 
-            if isinstance(self, TreeNode):
+            if isinstance(self, AvlNode):
                 self.display()
                 return
             else:
@@ -284,7 +284,7 @@ class Node():
         if self.left is None:
             lines, n, p, x = self.right._display_aux()
 
-            if isinstance(self, TreeNode):
+            if isinstance(self, AvlNode):
                 self.display()
                 return
             else:
@@ -355,7 +355,7 @@ class RedBlackTree():
 
     # Balancing the tree after deletion
     def delete_fix(self, x):
-        while not isinstance(x, TreeNode) and x != self.root and x.color == 0:
+        while not isinstance(x, AvlNode) and x != self.root and x.color == 0:
             if x == x.parent.left:
                 s = x.parent.right
 
@@ -366,22 +366,22 @@ class RedBlackTree():
                     s = x.parent.right
 
                 old_left = s.left
-                if isinstance(s.left, TreeNode):
+                if isinstance(s.left, AvlNode):
                     s.left   = self.TNULL
 
                 elif s.left.color == 0 and s.right.color == 0:
                     s.color = 1
                     x = x.parent
 
-                    if isinstance(old_left, TreeNode):
+                    if isinstance(old_left, AvlNode):
                         s.left = old_left
                 else:
                     old_right = self.TNULL
 
-                    if not isinstance(s, TreeNode) and s.right.color == 0:
+                    if not isinstance(s, AvlNode) and s.right.color == 0:
                         old_right = s.right
 
-                        if isinstance(s.right, TreeNode):
+                        if isinstance(s.right, AvlNode):
                             s.right = self.TNULL
 
                         s.left.color = 0
@@ -395,7 +395,7 @@ class RedBlackTree():
                     self.left_rotate(x.parent)
                     x = self.root
 
-                    if isinstance(old_right, TreeNode):
+                    if isinstance(old_right, AvlNode):
                         s.right.right = old_right
             else:
                 s = x.parent.left
@@ -408,7 +408,7 @@ class RedBlackTree():
 
                 old_right = s.right
 
-                if isinstance(s.right, TreeNode):
+                if isinstance(s.right, AvlNode):
                     s.right = self.TNULL
 
                 if s.right is None:
@@ -420,14 +420,14 @@ class RedBlackTree():
                     s.color = 1
                     x = x.parent
 
-                    if isinstance(old_right, TreeNode):
+                    if isinstance(old_right, AvlNode):
                         s.right = old_right
                 else:
                     old_left = self.TNULL
 
-                    if not isinstance(s, TreeNode) and s.left.color == 0:
+                    if not isinstance(s, AvlNode) and s.left.color == 0:
                         old_left = s.left
-                        if not isinstance(s.left, TreeNode):
+                        if not isinstance(s.left, AvlNode):
                             s.left = self.TNULL
 
                         s.right.color = 0
@@ -442,7 +442,7 @@ class RedBlackTree():
 
                     x = self.root
 
-                    if isinstance(old_left, TreeNode):
+                    if isinstance(old_left, AvlNode):
                         s.left.left = old_left
         x.color = 0
 
@@ -465,7 +465,7 @@ class RedBlackTree():
         avl_root_parent = node
 
         if isinstance(avl_root_parent, Node):
-            if isinstance(avl_root_parent.left, TreeNode):
+            if isinstance(avl_root_parent.left, AvlNode):
                 if avl_root_parent.depth < 2:
                     old_left = avl_root_parent.left
                     avl_key  = self.avl_tree.getMaxValueNode(old_left).key
@@ -480,7 +480,7 @@ class RedBlackTree():
                     new.color            = 0
                     avl_root_parent.left = new
 
-            if isinstance(avl_root_parent.right, TreeNode):
+            if isinstance(avl_root_parent.right, AvlNode):
                 if avl_root_parent.depth < 2:
                     old_right = avl_root_parent.right
                     avl_key   = self.avl_tree.getMinValueNode(old_right).key
@@ -503,7 +503,7 @@ class RedBlackTree():
         avl_root_parent = None
 
         while node != self.TNULL:
-            if isinstance(node, TreeNode):
+            if isinstance(node, AvlNode):
                 node = self.avl_tree.delete_node(node, key)
 
                 if key < avl_root_parent.item:
@@ -518,7 +518,7 @@ class RedBlackTree():
             if node.item == key:
                 z = node
 
-                if isinstance(node.right, TreeNode):
+                if isinstance(node.right, AvlNode):
                     avl_key   = self.avl_tree.getMinValueNode(node.right).key
                     new_right = self.avl_tree.delete_node(node.right, avl_key)
 
@@ -526,7 +526,7 @@ class RedBlackTree():
                     z.right = new_right if new_right is not None else self.TNULL
                     return
 
-                elif isinstance(node.left, TreeNode):
+                elif isinstance(node.left, AvlNode):
                     avl_key  = self.avl_tree.getMaxValueNode(node.left).key
                     new_left = self.avl_tree.delete_node(node.left, avl_key)
 
