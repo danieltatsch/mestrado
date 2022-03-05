@@ -50,19 +50,21 @@ data1 = gas_df['moving_average']
 data2 = climatic_element_df['moving_average']
 
 fig, ax1 = plt.subplots()
-ax1.set_title('Média móvel: {} [ppb] x {}'.format(gas_sensor, climatic_element))
+ax1.set_title('Média móvel: {} [ppb] x {}'.format(gas_sensor, climatic_element), size=25)
 color = 'tab:blue'
-ax1.set_xlabel('tempo [min]')
-ax1.set_ylabel('{} - concentracao [ppb]'.format(gas_sensor), color=color)
+ax1.set_xlabel('tempo [min]', size=25)
+ax1.set_ylabel('{} - concentração [ppb]'.format(gas_sensor), color=color, size=25)
 ax1.plot(data1, color=color)
-ax1.tick_params(axis='y', labelcolor=color)
+ax1.tick_params(axis='y', labelcolor=color, labelsize=20)
+ax1.tick_params(axis='x', labelsize=20)
 
 ax2 = ax1.twinx()
 
 color = 'tab:orange'
-ax2.set_ylabel('{}'.format(climatic_element), color=color)
+ax2.set_ylabel('{}'.format(climatic_element), color=color, size=25)
 ax2.plot(data2, color=color)
-ax2.tick_params(axis='y', labelcolor=color)
+ax2.tick_params(axis='y', labelcolor=color, labelsize=20)
+ax2.tick_params(axis='x', labelsize=20)
 
 fig.tight_layout()
 plt.show()
