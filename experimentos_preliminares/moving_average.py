@@ -43,8 +43,9 @@ climatic_element_df = climatic_element_obj[climatic_element]
 # gas_values    = np.where(gas_values_np > 25000, gas_mean, gas_values_np).tolist()
 # gas_df        = pd.DataFrame({'Value': gas_values})
 
-climatic_element_df['moving_average'] = climatic_element_df['Value'].rolling(window=1440).mean()
-gas_df['moving_average']              = gas_df['Value'].rolling(window=1440).mean()
+ma_window = 1440
+climatic_element_df['moving_average'] = climatic_element_df['Value'].rolling(ma_window).mean()
+gas_df['moving_average']              = gas_df['Value'].rolling(ma_window).mean()
 
 data1 = gas_df['moving_average']
 data2 = climatic_element_df['moving_average']
