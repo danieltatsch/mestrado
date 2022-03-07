@@ -30,9 +30,23 @@ for gas in gas_obj:
     gas_df  = gas_obj[gas]
     gas_var = gas_df['Value'].var()
 
+    # Get statistic metrics and transform to dict
     statistics = gas_df['Value'].describe()
     statistics = statistics.to_dict()
-    statistics['var'] = "%.3f" % gas_var
+
+    # Calc for Outliers
+    lower_thr = statistics['25%'] - 1.5 * (statistics['75%'] - statistics['25%'])
+    upper_thr = statistics['75%'] + 1.5 * (statistics['75%'] - statistics['25%'])
+
+    outiler_lower_count = (gas_df['Value'] < lower_thr).sum()
+    outiler_upper_count = (gas_df['Value'] > upper_thr).sum()
+
+    # Append additional information to dict
+    statistics['var']                 = gas_var
+    statistics['lower_thr']           = lower_thr
+    statistics['upper_thr']           = upper_thr
+    statistics['outiler_lower_count'] = int(outiler_lower_count)
+    statistics['outiler_upper_count'] = int(outiler_upper_count)
 
     output_dict[gas] = statistics
 
