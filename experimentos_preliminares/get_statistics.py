@@ -54,4 +54,4 @@ pprint(output_dict)
 
 file_name = 'statistcs.json'
 with open(file_name, 'w') as fp:
-    json.dump(output_dict, fp)
+    json.dump(output_dict, fp, indent=2)
