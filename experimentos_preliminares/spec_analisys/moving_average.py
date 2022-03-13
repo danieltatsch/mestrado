@@ -43,6 +43,10 @@ climatic_element_df = climatic_element_obj[climatic_element]
 # gas_values    = np.where(gas_values_np > 25000, gas_mean, gas_values_np).tolist()
 # gas_df        = pd.DataFrame({'Value': gas_values})
 
+# Media por dia
+# mean_per_day = gas_df.groupby(['Year', 'Month', 'Day']).mean()
+# print("MEAN PER DAY: {}".format(mean_per_day))
+
 ma_window = 1440
 climatic_element_df['moving_average'] = climatic_element_df['Value'].rolling(ma_window).mean()
 gas_df['moving_average']              = gas_df['Value'].rolling(ma_window).mean()
@@ -58,6 +62,7 @@ ax1.set_ylabel('{} - concentração [ppb]'.format(gas_sensor), color=color, size
 ax1.plot(data1, color=color)
 ax1.tick_params(axis='y', labelcolor=color, labelsize=20)
 ax1.tick_params(axis='x', labelsize=20)
+plt.grid()
 
 ax2 = ax1.twinx()
 
