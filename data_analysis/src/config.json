@@ -1,17 +1,17 @@
 {
     "climatic_elements": {
-        "TEMP": "..\alphasense_data\TEMP.CSV",
-        "RH":   "..\alphasense_data\RH.CSV"
+        "TEMP": "../alphasense_data/TEMP.CSV",
+        "RH":   "../alphasense_data/RH.CSV"
     },
     "gas_sensors": {
-        "ISB_CO":   "..\alphasense_data\ISB_CO.CSV",
-        "ISB_H2S":  "..\alphasense_data\ISB_H2S.CSV",
-        "ISB_NO2":  "..\alphasense_data\ISB_NO2.CSV",
-        "ISB_SO2":  "..\alphasense_data\ISB_SO2.CSV",
-        "ISB_O3":   "..\alphasense_data\ISB_O3.CSV",
-        "ISB_O3_2": "..\alphasense_data\ISB_O3_2.CSV"
+        "ISB_CO":   "../alphasense_data/ISB_CO.CSV",
+        "ISB_H2S":  "../alphasense_data/ISB_H2S.CSV",
+        "ISB_NO2":  "../alphasense_data/ISB_NO2.CSV",
+        "ISB_SO2":  "../alphasense_data/ISB_SO2.CSV",
+        "ISB_O3":   "../alphasense_data/ISB_O3.CSV",
+        "ISB_O3_2": "../alphasense_data/ISB_O3_2.CSV"
     },
-    "gas_range_ppb" = {
+    "gas_range_ppb": {
         "CO":   1000000,
         "H2S":  100000,
         "NO2":  20000,
@@ -19,5 +19,5 @@
         "O3":   20000,
         "O3_2": 20000
     },
-    "moving_average_window" = 60
+    "moving_average_window": 60
 }
