@@ -58,17 +58,11 @@ for gas in gas_obj:
     elif gas_df_length > temp_df_length:
         gas_df = gas_df[:temp_df_length]
 
-    print('GAS DF SIZE:  {}'.format(gas_df.shape[0]))
-    print("TEMP DF SIZE: {}".format(temp_df.shape[0]))
-    print("RH DF SIZE:   {}\n".format(rh_df.shape[0]))
-
-    print("-------------------------------")
-
     # Count number of values outside the sensor range
     greatter_than_range_count = (gas_df['Value'] > gas_range_ppb[gas]).sum()
     less_than_zero_count      = (gas_df['Value'] < 0).sum()
 
-    # Get outside values range to exclude the correct indexes of RH and TEMP datasets
+    # Get outside values range to exclude the correct indexes from RH and TEMP datasets
     greatter_than_range_index = gas_df[gas_df['Value'] > gas_range_ppb[gas]].index.tolist()
     less_than_range_index     = gas_df[gas_df['Value'] < 0].index.tolist()
 
@@ -80,14 +74,11 @@ for gas in gas_obj:
     rh_df   = rh_df.drop(rh_df.index[less_than_range_index])
 
     # Remove values outside the sensor range
-    gas_df = gas_df[gas_df['Value'] <= gas_range_ppb[gas]]
-    gas_df = gas_df[gas_df['Value'] >= 0]
+    gas_df = gas_df.drop(gas_df.index[greatter_than_range_index])
+    gas_df = gas_df.drop(gas_df.index[less_than_range_index])
 
-    # Correlation with outliers
-    corr_temp_w_outliers, _ = pearsonr(gas_df['Value'], temp_df['Value'])
-    corr_rh_w_outliers, _   = pearsonr(gas_df['Value'], rh_df['Value'])
-    # print('{} CORR TEMP: %.3f'.format(gas) % corr_temp_w_outliers)
-    # print('{} CORR RH:   %.3f\n'.format(gas) % corr_rh_w_outliers)
+    # gas_df = gas_df[gas_df['Value'] <= gas_range_ppb[gas]]
+    # gas_df = gas_df[gas_df['Value'] >= 0]
 
     # Get variance
     gas_var = gas_df['Value'].var()
@@ -111,15 +102,6 @@ for gas in gas_obj:
     outliers_indexes_list = outliers_indexes_list + gas_df_without_outliers[gas_df_without_outliers['Value'] <= lower_thr].index.tolist()
 
     # Correlation without outliers
-    temp_df = temp_df.drop(temp_df.index[outliers_indexes_list])
-    rh_df   = rh_df.drop(rh_df.index[outliers_indexes_list])
-
-    corr_temp_wo_outliers, _ = pearsonr(gas_df_without_outliers['Value'], temp_df['Value'])
-    corr_rh_wo_outliers, _   = pearsonr(gas_df_without_outliers['Value'], rh_df['Value'])
-    print('{} CORR TEMP: %.3f'.format(gas) % corr_temp_wo_outliers)
-    print('{} CORR RH:   %.3f\n'.format(gas) % corr_rh_wo_outliers)
-
-    input("FIM DA CORRELACAO SEM OS OUTLIERS")
 
     # Append additional information to dict
     statistics['var']                       = gas_var
@@ -129,8 +111,6 @@ for gas in gas_obj:
     statistics['outiler_upper_count']       = int(outiler_upper_count)
     statistics['greatter_than_range_count'] = int(greatter_than_range_count)
     statistics['less_than_zero_count']      = int(less_than_zero_count)
-    statistics['temp_cor_outliers']         = corr_temp_w_outliers
-    statistics['rh_cor_outlier']            = corr_rh_w_outliers
 
     # boxplot without outliers
 
