@@ -1,10 +1,14 @@
-from utils import *
+from utils        import *
+from gas_analysis import *
+
+debug_mode  = True
 
 def main():
-    config_path = "config.json"
+    debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+    debug("----------------------- INICIALIZACAO DO EXPERIMENTO -----------------------", "cyan", debug_mode)
+    debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-    config = open_json_file(config_path)
-    print(config)
+    gas_analysis = Gas_Analysis(debug_mode)
 
 if __name__ == "__main__":
     main()
