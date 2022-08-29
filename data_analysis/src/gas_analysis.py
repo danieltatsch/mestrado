@@ -40,6 +40,9 @@ class Gas_Analysis:
         self.append_data_from_df(rh_df, "Value", "rh_value")
         debug("Dataframe do poluente {} inicializado com sucesso!".format(self.config["gas_name"][self.gas_analysis]), "green", debug_mode)
 
+    def remove_unused_columns(self):
+        self.gas_df = self.gas_df.drop(["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt"], axis=1)
+
     def append_data_from_df(self, src_df, src_df_column, new_column_id):
         gas_df_length = self.gas_df.shape[0]
         src_df_length = src_df.shape[0]
