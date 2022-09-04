@@ -2,20 +2,15 @@ from utils import *
 import pandas as pd
 import sys
 
-config_path = "config.json"
-
 class Gas_Analysis:
-    def __init__(self, debug_mode):
-        self.config = None
+    def __init__(self, config, gas_sensor, debug_mode):
         self.gas_df = None
 
-        self.load_config(config_path, debug_mode)
+        self.gas_analysis = gas_sensor
 
-        self.gas_analysis = self.config["default_gas_df"]
-
-        gas_df_path  = self.config["gas_sensors"][self.gas_analysis]
-        temp_df_path = self.config["climatic_elements"]["TEMP"]
-        rh_df_path   = self.config["climatic_elements"]["RH"]
+        gas_df_path  = config["gas_sensors"][self.gas_analysis]
+        temp_df_path = config["climatic_elements"]["TEMP"]
+        rh_df_path   = config["climatic_elements"]["RH"]
 
         debug("Inicializando dataframes...\n", "blue", debug_mode)
         debug("Gas em analise: {}".format(gas_df_path), None, debug_mode)
@@ -38,7 +33,7 @@ class Gas_Analysis:
         self.set_datatime_col()
         self.append_data_from_df(temp_df, "Value", "temp_value")
         self.append_data_from_df(rh_df, "Value", "rh_value")
-        debug("Dataframe do poluente {} inicializado com sucesso!".format(self.config["gas_name"][self.gas_analysis]), "green", debug_mode)
+        debug("Dataframe do poluente {} inicializado com sucesso!".format(config["gas_name"][self.gas_analysis]), "green", debug_mode)
 
     def remove_unused_columns(self):
         self.gas_df = self.gas_df.drop(["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt"], axis=1)
@@ -54,13 +49,6 @@ class Gas_Analysis:
             self.gas_df.drop(self.gas_df.tail(len_diff).index, inplace = True)
 
         self.gas_df[new_column_id] = src_df[src_df_column]
-
-    def load_config(self, config_path, debug_mode):
-        debug("Abrindo arquivo de configuracao...", "blue", debug_mode)
-        self.config = open_json_file(config_path)
-
-        if not self.config:
-            debug("\nFalha ao abrir arquivo\n", "red", debug_mode)
 
     def set_datatime_col(self):
         date_time_col           = ['Year','Month','Day','Hour','Minute','Second']

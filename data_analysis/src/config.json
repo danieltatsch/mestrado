@@ -27,6 +27,6 @@
         "O3":   20000,
         "O3_2": 20000
     },
-    "moving_average_window": 60,
-    "default_gas_df": "O3"
+    "moving_average_window": [60, 240, 720, 1440],
+    "default_gas_df": "O3_2"
 }
