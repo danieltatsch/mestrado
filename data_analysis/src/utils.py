@@ -14,6 +14,10 @@ def open_json_file(path : str) -> dict:
 
     return data
 
+def dict_to_json_file(out_file_name, out_dict):
+    with open(out_file_name, 'w') as fp:
+        json.dump(out_dict, fp, indent=0)
+
 def load_config(config_path, debug_mode):
     debug("Abrindo arquivo de configuracao...", "blue", debug_mode)
     config = open_json_file(config_path)
@@ -27,7 +31,7 @@ def debug(text, color=None, debug=True):
     if debug:
         print(colored(text, color)) if color is not None else print(text)
 
-def plot_double(x, data1, data2, title, x_label, data1_label, data2_label):
+def plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
     # x     = gas_df_ma["datetime"]
     # data1 = gas_df_ma["ma_gas"]
     # data2 = gas_df_ma["temp_value"]

@@ -4,8 +4,7 @@ import sys
 
 class Gas_Analysis:
     def __init__(self, config, gas_sensor, debug_mode):
-        self.gas_df = None
-
+        self.gas_df       = None
         self.gas_analysis = gas_sensor
 
         gas_df_path  = config["gas_sensors"][self.gas_analysis]
