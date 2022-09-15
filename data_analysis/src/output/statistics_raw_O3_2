@@ -1,0 +1,19 @@
+{
+"count": 8957.0,
+"mean": 126.69760299207323,
+"std": 84.84510135383375,
+"min": -16.1,
+"25%": 59.58,
+"50%": 125.31,
+"75%": 156.76,
+"max": 392.57,
+"var": 7198.691223742323,
+"greatter_than_range_count": 0,
+"less_than_zero_count": 35,
+"corr_gas_temp": 0.8814010825320368,
+"corr_gas_rh": -0.763009790257783,
+"lower_thr": -86.18999999999998,
+"upper_thr": 302.53,
+"outiler_lower_count": 0,
+"outiler_upper_count": 655
+}
