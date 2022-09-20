@@ -2,3 +2,4 @@
 
 *.bak
 data_analysis/src/backup_files/*
+data_analysis/src/output/*
