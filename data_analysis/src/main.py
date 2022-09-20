@@ -3,12 +3,13 @@ from gas_analysis import *
 from statistics   import *
 
 import pprint
+import sys
 import os
 
 debug_mode  = True
 config_path = "config.json"
 
-def init_dataframe(config, gas_sensor, backup_folder, df_pickle_path, debug_mode):
+def init_dataframe(config, gas_sensor, range_ppb, backup_folder, df_pickle_path, output_folder, debug_mode):
     gas_df = None
 
     if os.path.exists(df_pickle_path):
@@ -17,6 +18,9 @@ def init_dataframe(config, gas_sensor, backup_folder, df_pickle_path, debug_mode
         gas_df = pd.read_pickle(df_pickle_path)
 
         debug("Sucesso!", "green", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
+        return gas_df
     else:
         gas_analysis = Gas_Analysis(config, gas_sensor, debug_mode)
         gas_analysis.remove_unused_columns()
@@ -33,14 +37,21 @@ def init_dataframe(config, gas_sensor, backup_folder, df_pickle_path, debug_mode
 
         print(gas_df.head())
 
-        debug("Salvando dataset com as medias moveis", "cyan", debug_mode)
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("---------------------- REALIZANDO ANALISE ESTATISTICA ----------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+        
+        gas_df_processed = remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode)
+
+        debug(f"Salvando dataset no arquivo de backup {df_pickle_path}", "cyan", debug_mode)
 
         if not os.path.exists(backup_folder): os.makedirs(backup_folder)
         gas_df.to_pickle(df_pickle_path)
 
         debug("Sucesso!", "green", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-    return gas_df
+        return gas_df_processed
 
 def main():
     debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
@@ -54,32 +65,23 @@ def main():
     output_folder  = "output"
     df_pickle_path = "{}/{}_df_pickle".format(backup_folder, gas_sensor)
 
-    gas_df = init_dataframe(config, gas_sensor, backup_folder, df_pickle_path, debug_mode)
+    gas_df = init_dataframe(config, gas_sensor, range_ppb, backup_folder, df_pickle_path, output_folder, debug_mode)
 
-    debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
-    debug("---------------------- REALIZANDO ANALISE ESTATISTICA ----------------------", "cyan", debug_mode)
-    debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
-    
-    gas_df_processed = remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode)
+    # print(gas_df.shape)
+    # print(gas_df.head())
 
-    print(gas_df_processed.shape)
-    print(gas_df_processed.head())
+    options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Redes Neurais Artificiais", "5) Sair"]
+    input_text   = "Selecione a opcao desejada:\n" + '\n'.join(options_list)
 
-    option = -1
-    while True:
-        try:
-            print("\nSelecione a opcao desejada:\n1) Regressoes lineares\n2) Tecnicas de machine learning\n")
-            option = int(input("> "))
-        except:
-            pass
+    option = get_number_by_range(1, len(options_list), input_text)
 
-        if option in [1,2,3]:
-            break
-
-        debug("\nEntrada invalida!", "red", True)
-    
     if option == 1:
-        pass
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("---------------------------- REGRESSOES LINEARES ---------------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
+    if option == 5:
+        sys.exit()
 
 def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode):
     gas_value  = gas_df["Value"]
