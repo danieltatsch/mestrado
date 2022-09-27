@@ -32,20 +32,22 @@ def debug(text, color=None, debug=True):
         print(colored(text, color)) if color is not None else print(text)
 
 def get_number_by_range(lower_th, upper_th, text=None):
-    input_text = text if text is not None else f"Selecione um numero entre {lower_th} and {upper_th}: "
+    input_text = text if text is not None else f"Selecione um numero entre {lower_th} e {upper_th}: "
 
     option = -1
     while True:
         try:
-            print(input_text)
-            option = int(input("\n> "))
+            # print(input_text)
+            option = int(input(f"\n{input_text}"))
         except:
             pass
 
         if option >= lower_th and option <= upper_th:
             break
 
-        debug("\nEntrada invalida!\n", "red", True)
+        debug("\nEntrada invalida!", "red", True)
+
+    return option
 
 def plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
     # x     = gas_df_ma["datetime"]

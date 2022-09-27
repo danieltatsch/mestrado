@@ -58,8 +58,24 @@ def main():
     debug("----------------------- INICIALIZACAO DO EXPERIMENTO -----------------------", "cyan", debug_mode)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-    config         = load_config(config_path, debug_mode)
-    gas_sensor     = config["default_gas_df"]
+    config      = load_config(config_path, debug_mode)
+    gas_options = config["gas_sensors"]
+
+    print("\nSelecao do gas para analise:\n")
+
+    i = 1
+    for key in gas_options:
+        description = config["gas_name"][key]
+
+        print(f"{i} - {key} ({description})")
+        i += 1
+
+    option     = get_number_by_range(1, i-1)
+    gas_sensor = list(gas_options.items())[option - 1][0]
+    gas_name   = config["gas_name"][gas_sensor]
+
+    debug(f"\nGAS SELECIONADO: {gas_sensor} ({gas_name})", "green", True)
+
     range_ppb      = config["gas_range_ppb"][gas_sensor]
     backup_folder  = "backup_files"
     output_folder  = "output"
