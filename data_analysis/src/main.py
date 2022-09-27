@@ -1,6 +1,11 @@
 from utils        import *
 from gas_analysis import *
 from statistics   import *
+from regressions  import *
+
+from sklearn.model_selection import train_test_split
+import matplotlib.pyplot as plt
+import numpy             as np
 
 import pprint
 import sys
@@ -83,18 +88,89 @@ def main():
 
     gas_df = init_dataframe(config, gas_sensor, range_ppb, backup_folder, df_pickle_path, output_folder, debug_mode)
 
+    # # Teste plot
+    # x     = gas_df["datetime"]
+    # data1 = gas_df["Value"]
+    # data2 = gas_df["ma_60_gas"]
+    # data3 = gas_df["ma_240_gas"]
+    # data4 = gas_df["ma_720_gas"]
+    # data5 = gas_df["ma_1440_gas"]
+
+    # plot_double(x, data2, data4, title='', x_label='', data1_label='', data2_label='')
+
     # print(gas_df.shape)
     # print(gas_df.head())
 
+    input_text   = "Selecao da algoritmo de analise:\n"
     options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Redes Neurais Artificiais", "5) Sair"]
-    input_text   = "Selecione a opcao desejada:\n" + '\n'.join(options_list)
+    
+    print(input_text)
+    for i in options_list:
+        print(i)
 
-    option = get_number_by_range(1, len(options_list), input_text)
+    option = get_number_by_range(1, len(options_list))
 
     if option == 1:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("---------------------------- REGRESSOES LINEARES ---------------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
+        lin_reg_options_list = ["1) Regressao linear simples", "2) Regressao linear multipla"]
+        lin_reg_input_text   = "Tipo de regressao:\n\n" + '\n'.join(lin_reg_options_list)
+
+        print(lin_reg_input_text)
+
+        lin_reg_option = get_number_by_range(1, len(lin_reg_options_list))
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
+        if lin_reg_option == 1:
+            debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR SIMPLES", "cyan", debug_mode)
+            
+            window_size = 60
+            gas_df_without_nan = gas_df.dropna()
+            
+            # x = gas_df_without_nan[f'ma_{window_size}_gas'].tolist()
+            x = gas_df_without_nan[f'rh_value'].tolist()
+            y = gas_df_without_nan['Value'].tolist()
+
+            debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
+
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            X_train = np.array(X_train)
+            X_test = np.array(X_test)
+            X_train = np.reshape(X_train, (-1,1))
+            X_test = np.reshape(X_test, (-1,1))
+
+            y_train = np.array(y_train)
+
+            debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
+
+            regression_model = simple_linear_regression(X_train, y_train)
+
+            debug("\nObtendo coeficiente de determinacao R^2", "cyan", debug_mode)
+
+            print(f'Coeficiente R^2: {regression_model.get_r2()}')
+
+            b0, b1 = regression_model.get_coefficients()
+
+            print(regression_model.get_coefficients())
+
+            debug("\nObtendo dados de teste", "cyan", debug_mode)
+
+            y_pred = regression_model.get_predict_data(X_test)
+
+            plt.scatter(X_test, y_test, color="black")
+            plt.plot(X_test, y_pred, color="blue", linewidth=3)
+            plt.show()
+
+            # gas_df_without_nan = gas_df.dropna()
+
+            # linear_regression = simple_linear_regression(x, y)
+
+            # y_pred = linear_regression.get_predict_data(x)
+            # b0, b1 = linear_regression.get_coefficients()
+            # r2     = linear_regression.get_r2()
 
     if option == 5:
         sys.exit()
