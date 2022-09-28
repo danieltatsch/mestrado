@@ -101,7 +101,7 @@ def main():
     # print(gas_df.shape)
     # print(gas_df.head())
 
-    input_text   = "Selecao da algoritmo de analise:\n"
+    input_text   = "Selecao do algoritmo de analise:\n"
     options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Redes Neurais Artificiais", "5) Sair"]
     
     print(input_text)
@@ -124,13 +124,14 @@ def main():
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
         if lin_reg_option == 1:
-            debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR SIMPLES", "cyan", debug_mode)
+            debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR SIMPLES", debug=debug_mode)
             
             window_size = 60
             gas_df_without_nan = gas_df.dropna()
             
-            # x = gas_df_without_nan[f'ma_{window_size}_gas'].tolist()
-            x = gas_df_without_nan[f'rh_value'].tolist()
+            # x = gas_df_without_nan[f'ma_{window_size}_temp'].tolist()
+            # y = gas_df_without_nan[f'ma_{window_size}_gas'].tolist()
+            x = gas_df_without_nan[f'temp_value'].tolist()
             y = gas_df_without_nan['Value'].tolist()
 
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
@@ -148,30 +149,105 @@ def main():
 
             regression_model = simple_linear_regression(X_train, y_train)
 
-            debug("\nObtendo coeficiente de determinacao R^2", "cyan", debug_mode)
+            debug("\nObtendo dados de teste", "cyan", debug_mode)
 
-            print(f'Coeficiente R^2: {regression_model.get_r2()}')
+            y_pred = regression_model.get_predict_data(X_test)
 
-            b0, b1 = regression_model.get_coefficients()
+            debug("\nObtendo metricas", "cyan", debug_mode)
 
-            print(regression_model.get_coefficients())
+            slr_dict = {}
+
+            slr_dict["r2"]                 = regression_model.get_r2()
+            b0, b1                         = regression_model.get_coefficients()
+            slr_dict["coefficients"]       = {}
+            slr_dict["coefficients"]["b0"] = b0
+            slr_dict["coefficients"]["b1"] = b1[0]
+            slr_dict["mse"]                = get_MSE(y_test, y_pred)
+            slr_dict["rmse"]               = get_RMSE(y_test, y_pred)
+            slr_dict["mae"]                = get_MAE(y_test, y_pred)
+
+            debug(f'Coeficientes: {slr_dict["coefficients"]}', debug=debug_mode)
+            debug(f'R^2:  {slr_dict["r2"]}', debug=debug_mode)
+            debug(f'MSE:  {slr_dict["mse"]}', debug=debug_mode)
+            debug(f'RMSE: {slr_dict["rmse"]}', debug=debug_mode)
+            debug(f'MAE:  {slr_dict["mae"]}', debug=debug_mode)
+
+            ouput_slr_path = "output/simple_linear_regression"
+
+            if not os.path.exists(ouput_slr_path): os.makedirs(ouput_slr_path)
+
+            debug(f"\nSalvando metricas no diretorio: {ouput_slr_path}", "cyan", debug_mode)
+
+            dict_to_json_file(ouput_slr_path + "/metrics.json", slr_dict)
+
+            debug("SUCESSO!", "green", debug_mode)
+
+            plt.scatter(X_test, y_test, color="black")
+            plt.plot(X_test, y_pred, color="blue", linewidth=3)
+            plt.show()
+        if lin_reg_option == 2:
+            debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR MULTIPLA", debug=debug_mode)
+            
+            window_size = 60
+            gas_df_without_nan = gas_df.dropna()
+
+            print(gas_df_without_nan.head())
+
+            x = gas_df_without_nan[["temp_value", "rh_value"]]
+            y = gas_df_without_nan["Value"]
+            
+            debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
+
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            X_train = np.array(X_train)
+            X_test = np.array(X_test)
+            # X_train = np.reshape(X_train, (-1,1))
+            # X_test = np.reshape(X_test, (-1,1))
+
+            y_train = np.array(y_train).reshape(-1,1)
+
+            debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
+
+            regression_model = simple_linear_regression(X_train, y_train)
 
             debug("\nObtendo dados de teste", "cyan", debug_mode)
 
             y_pred = regression_model.get_predict_data(X_test)
 
+            debug("\nObtendo metricas", "cyan", debug_mode)
+
+            mlr_dict = {}
+
+            mlr_dict["r2"]           = regression_model.get_r2()
+            b0, b1                   = regression_model.get_coefficients()
+            b1                       = b1[0].tolist()
+            mlr_dict["coefficients"] = {}
+            mlr_dict["coefficients"]["b0"] = b0[0]
+            mlr_dict["coefficients"]["b1"] = b1
+            mlr_dict["mse"]          = get_MSE(y_test, y_pred)
+            mlr_dict["rmse"]         = get_RMSE(y_test, y_pred)
+            mlr_dict["mae"]          = get_MAE(y_test, y_pred)
+
+            debug(f'Coeficientes: {mlr_dict["coefficients"]}', debug=debug_mode)
+            debug(f'R^2:  {mlr_dict["r2"]}', debug=debug_mode)
+            debug(f'MSE:  {mlr_dict["mse"]}', debug=debug_mode)
+            debug(f'RMSE: {mlr_dict["rmse"]}', debug=debug_mode)
+            debug(f'MAE:  {mlr_dict["mae"]}', debug=debug_mode)
+
+            ouput_slr_path = "output/multiple_linear_regression"
+
+            if not os.path.exists(ouput_slr_path): os.makedirs(ouput_slr_path)
+
+            debug(f"\nSalvando metricas no diretorio: {ouput_slr_path}", "cyan", debug_mode)
+
+            dict_to_json_file(ouput_slr_path + "/metrics.json", mlr_dict)
+
+            debug("SUCESSO!", "green", debug_mode)
+
             plt.scatter(X_test, y_test, color="black")
             plt.plot(X_test, y_pred, color="blue", linewidth=3)
             plt.show()
-
-            # gas_df_without_nan = gas_df.dropna()
-
-            # linear_regression = simple_linear_regression(x, y)
-
-            # y_pred = linear_regression.get_predict_data(x)
-            # b0, b1 = linear_regression.get_coefficients()
-            # r2     = linear_regression.get_r2()
-
     if option == 5:
         sys.exit()
 
