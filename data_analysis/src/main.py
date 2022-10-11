@@ -131,7 +131,8 @@ def main():
             
             # x = gas_df_without_nan[f'ma_{window_size}_temp'].tolist()
             # y = gas_df_without_nan[f'ma_{window_size}_gas'].tolist()
-            x = gas_df_without_nan[f'temp_value'].tolist()
+            # x = gas_df_without_nan['temp_value'].tolist()
+            x = gas_df_without_nan['rh_value'].tolist()
             y = gas_df_without_nan['Value'].tolist()
 
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
@@ -193,8 +194,10 @@ def main():
 
             print(gas_df_without_nan.head())
 
-            x = gas_df_without_nan[["temp_value", "rh_value"]]
-            y = gas_df_without_nan["Value"]
+            # x = gas_df_without_nan[["temp_value", "rh_value"]]
+            x = gas_df_without_nan[[f'ma_{window_size}_temp', f'ma_{window_size}_rh']]
+            # y = gas_df_without_nan["Value"]
+            y = gas_df_without_nan[f'ma_{window_size}_gas']
             
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
@@ -248,6 +251,115 @@ def main():
             plt.scatter(X_test, y_test, color="black")
             plt.plot(X_test, y_pred, color="blue", linewidth=3)
             plt.show()
+    if option == 2:
+        from sklearn.neighbors 		 import KNeighborsClassifier
+        from sklearn.ensemble 		 import RandomForestClassifier
+        from sklearn.svm 			 import SVC  
+        from sklearn.metrics 		 import confusion_matrix, classification_report
+        from sklearn 				 import metrics
+        from scipy 					 import stats
+        from sklearn                 import preprocessing
+        from sklearn                 import utils
+
+        window_size        = 60
+        gas_df_without_nan = gas_df.dropna()
+
+        print(gas_df_without_nan.head())
+
+        x = gas_df_without_nan[["temp_value", "rh_value"]].values
+        # y = gas_df_without_nan["Value"].values
+        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
+        y = gas_df_without_nan["ma_60_gas"].values
+
+        neighbors_trees = 25
+        neighbors = np.arange(1,neighbors_trees)
+        trees 	  = np.arange(1,neighbors_trees)
+
+        test_accuracy_knn  			 = np.empty(len(neighbors))
+        test_accuracy_random_forest  = np.empty(len(trees))
+
+        knn_precision_list  = []
+        rf_precision_list   = []
+
+        k_variation 	= []
+        trees_variation = []
+
+        i = 0
+        while i < 2:
+            print(f"INCIANDO LACO {i}\n\n")
+
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            y_train = np.ravel(y_train)
+            y_test  = np.ravel(y_test)
+            
+            lab_enc = preprocessing.LabelEncoder()
+            y_train = lab_enc.fit_transform(y_train)
+            y_test  = lab_enc.fit_transform(y_test)
+
+            for j,k in enumerate(neighbors):
+                knn           = KNeighborsClassifier(n_neighbors=k)
+                random_forest = RandomForestClassifier(n_estimators=k)  
+            
+                #divide o modelo
+                knn.fit(X_train, y_train)	
+                random_forest.fit(X_train, y_train)
+                    
+                # Calcula a precisao dos dados de teste
+                test_accuracy_knn[j] 		   = knn.score(X_test, y_test)
+                test_accuracy_random_forest[j] = random_forest.score(X_test, y_test)
+
+            knn_precision_list.append(max(test_accuracy_knn))
+            rf_precision_list.append(max(test_accuracy_random_forest))
+
+            k_variation.append(np.argmax(test_accuracy_knn))
+            trees_variation.append(np.argmax(test_accuracy_random_forest))
+
+            i += 1
+
+        k_variation = np.array(k_variation)
+        media_knn 	= np.mean(k_variation)
+        std_knn 	= np.std(k_variation)
+
+        trees_variation = np.array(trees_variation)
+        media_rf 		= np.mean(trees_variation)
+        std_rf 			= np.std(trees_variation)
+
+        knn_precision_list = np.array(knn_precision_list)
+        rf_precision_list  = np.array(rf_precision_list)
+
+        knn_media = np.mean(knn_precision_list)
+        rf_media  = np.mean(rf_precision_list)
+
+        print("-------K-NN-------")
+        print("Media: " + str(knn_media))
+
+        print("-------Random Forest-------")
+        print("Media: " + str(rf_media))
+
+        print("-------Vizinhos-------")
+        print("Media: " + str(media_knn))
+        print("Min: " + str(media_knn - std_knn))
+        print("Max: " + str(media_knn + std_knn))
+        print("-------Arvores-------")
+        print("Media: " + str(media_rf))
+        print("Min: " + str(media_rf - std_rf))
+        print("Max: " + str(media_rf + std_rf))
+
+        print("numd e vizinhos mais repetido: " + str(stats.mode(k_variation, keepdims = True)))
+        print("num de arvores mais repetido: " + str(stats.mode(trees_variation, keepdims = True)))
+
+        # Verificando precisao do K-NN e Random Forest para diferentes valores de K e arvores de decisao
+
+        plt.title('k-NN variando numero de vizinhos proximos')
+        plt.plot(neighbors, test_accuracy_knn, label='Precisao K-NN')
+        plt.plot(trees, test_accuracy_random_forest, label='Precisao Random Forest')
+        plt.legend()
+        plt.xlabel('Numero de vizinhos proximos / Arvores de decisao')
+        plt.ylabel('Precisao')
+        plt.grid()
+        plt.show()
+
     if option == 5:
         sys.exit()
 
