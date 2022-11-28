@@ -128,18 +128,9 @@ def main():
     input_text   = "Selecao do algoritmo de analise:\n"
     options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Sair"]
 
-    print(input_text)
-    for i in options_list:
-        print(i)
-
-    option = get_number_by_range(1, len(options_list))
-    
-    if option == 8:
-        sys.exit(0)
-
     column_under_analysis = "Value"
 
-    gas_df_without_nan = gas_df.dropna()
+    gas_df_without_nan = gas_df.dropna().copy()
 
     sts_path = f"{output_folder}/statistics_processed_{gas_sensor}.json"
 
@@ -149,7 +140,6 @@ def main():
     sts = open_json_file(sts_path)
 
     values_list             = gas_df_without_nan[column_under_analysis].tolist()
-    # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
     categorical_values_list = []
 
     for v in values_list:
@@ -160,7 +150,17 @@ def main():
 
     gas_df_without_nan["categorical_values"] = categorical_values_list
 
-    print(gas_df_without_nan.head())
+    debug("Amostra de dados do dataset:\n", "yellow", debug_mode)
+    debug(gas_df_without_nan.head(), "cyan", debug_mode)
+
+    print(input_text)
+    for i in options_list:  
+        print(i)
+
+    option = get_number_by_range(1, len(options_list))
+
+    if option == 8:
+        sys.exit(0)
 
     if option == 1:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
