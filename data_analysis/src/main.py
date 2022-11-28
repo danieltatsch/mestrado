@@ -27,7 +27,6 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics 		 import confusion_matrix, classification_report
 from sklearn.utils           import class_weight
 
-
 debug_mode  = True
 config_path = "config.json"
 
@@ -45,7 +44,7 @@ def init_dataframe(config, gas_sensor, range_ppb, backup_folder, df_pickle_path,
         return gas_df
     else:
         gas_analysis = Gas_Analysis(config, gas_sensor, debug_mode)
-        gas_analysis.remove_unused_columns()
+        gas_analysis.remove_unused_columns(config["default_unused_columns"])
 
         gas_df         = gas_analysis.gas_df.copy()
         ma_window_list = config["moving_average_window"]
@@ -115,15 +114,11 @@ def main():
     # # Teste plot
     # x     = gas_df["datetime"]
     # data1 = gas_df["Value"]
-    # data2 = gas_df["ma_60_gas"]
-    # data3 = gas_df["ma_240_gas"]
-    # data4 = gas_df["ma_720_gas"]
-    # data5 = gas_df["ma_1440_gas"]
+    # data2 = gas_df["temp_value"]
 
-    # plot_double(x, data2, data4, title='', x_label='', data1_label='', data2_label='')
+    # plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label='')
 
-    # print(gas_df.shape)
-    # print(gas_df.head())
+    # input("DANIEL")
 
     input_text   = "Selecao do algoritmo de analise:\n"
     options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Sair"]

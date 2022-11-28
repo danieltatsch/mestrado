@@ -28,5 +28,7 @@
         "O3_2": 20000
     },
     "moving_average_window": [60, 240, 720, 1440],
-    "default_gas_df": "O3_2"
+    "default_gas_df": "O3",
+    "default_features": ["temp_value", "rh_value"],
+    "default_unused_columns": ["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt"]
 }
