@@ -104,8 +104,11 @@ def main():
 
     range_ppb      = config["gas_range_ppb"][gas_sensor]
     backup_folder  = "backup_files"
-    output_folder  = "output"
+    output_folder  = f"output/{gas_sensor}"
     df_pickle_path = "{}/{}_df_pickle".format(backup_folder, gas_sensor)
+
+    if not os.path.exists("output/"): os.makedirs("output/")
+    if not os.path.exists(output_folder): os.makedirs(output_folder)
 
     gas_df = init_dataframe(config, gas_sensor, range_ppb, backup_folder, df_pickle_path, output_folder, debug_mode)
 
@@ -138,7 +141,12 @@ def main():
 
     gas_df_without_nan = gas_df.dropna()
 
-    sts = open_json_file(f"output/statistics_processed_{gas_sensor}")
+    sts_path = f"{output_folder}/statistics_processed_{gas_sensor}.json"
+
+    if not os.path.exists(sts_path):
+        remove_invalid_data(gas_df_without_nan, range_ppb, gas_sensor, output_folder, debug_mode)
+    
+    sts = open_json_file(sts_path)
 
     values_list             = gas_df_without_nan[column_under_analysis].tolist()
     # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
@@ -221,16 +229,14 @@ def main():
             debug(f'RMSE: {slr_dict["rmse"]}', debug=debug_mode)
             debug(f'MAE:  {slr_dict["mae"]}', debug=debug_mode)
 
-            ouput_slr_path = "output/simple_linear_regression"
+            output_slr_path = f"{output_folder}/simple_linear_regression"
 
-            if not os.path.exists(output_folder): os.makedirs(output_folder)
-            if not os.path.exists(ouput_slr_path): os.makedirs(ouput_slr_path)
+            if not os.path.exists(output_slr_path): os.makedirs(output_slr_path)
 
-            debug(f"\nSalvando metricas no diretorio: {ouput_slr_path}", "cyan", debug_mode)
+            debug(f"\nSalvando metricas no diretorio: {output_slr_path}", "cyan", debug_mode)
 
-            dict_to_json_file(ouput_slr_path + "/metrics.json", slr_dict)
-            dict_to_json_file(ouput_slr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", slr_dict)
-
+            dict_to_json_file(output_slr_path + "/metrics.json", slr_dict)
+            dict_to_json_file(output_slr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", slr_dict)
 
             debug("SUCESSO!", "green", debug_mode)
 
@@ -247,7 +253,7 @@ def main():
 
             fig.tight_layout()
 
-            fig.savefig('{}/{}_{}_{}.png'.format(ouput_slr_path, "slr", "regression_line", climatic_element), dpi=fig.dpi)
+            fig.savefig('{}/{}_{}_{}.png'.format(output_slr_path, "slr", "regression_line", climatic_element), dpi=fig.dpi)
 
         if lin_reg_option == 2:
             debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR MULTIPLA", debug=debug_mode)
@@ -299,13 +305,13 @@ def main():
             debug(f'RMSE: {mlr_dict["rmse"]}', debug=debug_mode)
             debug(f'MAE:  {mlr_dict["mae"]}', debug=debug_mode)
 
-            ouput_mlr_path = "output/multiple_linear_regression"
+            output_mlr_path = f"{output_folder}/multiple_linear_regression"
 
-            if not os.path.exists(ouput_mlr_path): os.makedirs(ouput_mlr_path)
+            if not os.path.exists(output_mlr_path): os.makedirs(output_mlr_path)
 
-            debug(f"\nSalvando metricas no diretorio: {ouput_mlr_path}", "cyan", debug_mode)
+            debug(f"\nSalvando metricas no diretorio: {output_mlr_path}", "cyan", debug_mode)
 
-            dict_to_json_file(ouput_mlr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", mlr_dict)
+            dict_to_json_file(output_mlr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", mlr_dict)
 
             debug("SUCESSO!", "green", debug_mode)
     if option == 2:
@@ -386,12 +392,11 @@ def main():
 
         fig.tight_layout()
 
-        ouput_knn_path = "output/knn"
+        output_knn_path = f"{output_folder}/knn"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
-        if not os.path.exists(ouput_knn_path): os.makedirs(ouput_knn_path)
+        if not os.path.exists(output_knn_path): os.makedirs(output_knn_path)
 
-        fig.savefig('{}/{}_{}.png'.format(ouput_knn_path, "knn", "variation"), dpi=fig.dpi)
+        fig.savefig('{}/{}_{}.png'.format(output_knn_path, "knn", "variation"), dpi=fig.dpi)
 
     ###########################################################################################
         X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
@@ -424,7 +429,7 @@ def main():
         plt.ylabel('Valor real', fontsize=18)
         plt.title('Matriz de confusao - KNN', fontsize=18)
         plt.show()
-        fig.savefig(f"{ouput_knn_path}/knn_confusion_matrix.png")
+        fig.savefig(f"{output_knn_path}/knn_confusion_matrix.png")
 
         knn         = {}
         knn["r2"]   = get_r2_score(y_test, knn_y_pred)
@@ -437,9 +442,9 @@ def main():
         debug(f'RMSE: {knn["rmse"]}', debug=debug_mode)
         debug(f'MAE:  {knn["mae"]}', debug=debug_mode)
         
-        debug(f"\nSalvando metricas no diretorio: {ouput_knn_path}", "cyan", debug_mode)
+        debug(f"\nSalvando metricas no diretorio: {output_knn_path}", "cyan", debug_mode)
 
-        dict_to_json_file(ouput_knn_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knn)
+        dict_to_json_file(output_knn_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knn)
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 3:
@@ -520,9 +525,8 @@ def main():
 
         fig.tight_layout()
 
-        output_rf_path = "output/random_forest"
+        output_rf_path = f"{output_folder}/random_forest"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
         if not os.path.exists(output_rf_path): os.makedirs(output_rf_path)
 
         fig.savefig('{}/{}_{}.png'.format(output_rf_path, "trees", "variation"), dpi=fig.dpi)
@@ -621,9 +625,8 @@ def main():
 
         print("Acuracia media: " + str(svm_accuracy_mean))
 
-        output_svm_path = "output/svm"
+        output_svm_path = f"{output_folder}/svm"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
         if not os.path.exists(output_svm_path): os.makedirs(output_svm_path)
     ###########################################################################################
         X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
@@ -723,9 +726,8 @@ def main():
         dense_layer_size        = 64                                                               # quantidade de neuronios na camada densa
         n_epochs                = 30                                                               # quantiddade de vezes que o treinamento ira acontecer
 
-        output_ann_path = 'output/ann'
+        output_ann_path = f"{output_folder}/ann"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
         if not os.path.exists(output_ann_path): os.makedirs(output_ann_path)
 
         debug("Ajustando pesos das classes...", "blue", debug_mode)
@@ -873,9 +875,8 @@ def main():
         most_repeated_k = np.bincount(k_variation).argmax()
         print("numero de vizinhos mais repetido: " + str(most_repeated_k))
 
-        output_knr_path = "output/knr"
+        output_knr_path = f"{output_folder}/knr"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
         if not os.path.exists(output_knr_path): os.makedirs(output_knr_path)
 
         fig, ax1 = plt.subplots()
@@ -953,10 +954,9 @@ def main():
 
         climatic_element = "_".join(features_list)
 
-        ouput_svr_path = "output/svr"
+        output_svr_path = f"{output_folder}/svr"
 
-        if not os.path.exists(output_folder): os.makedirs(output_folder)
-        if not os.path.exists(ouput_svr_path): os.makedirs(ouput_svr_path)
+        if not os.path.exists(output_svr_path): os.makedirs(output_svr_path)
 
         debug("\nCalibrando parametro de regularizacao (C)...", "cyan", debug_mode)
 
@@ -1005,7 +1005,7 @@ def main():
         plt.grid(color=color, which='both')
         plt.show()
 
-        fig.savefig('{}/{}_{}_{}_{}.png'.format(ouput_svr_path, "svr", "set_C", svr_epsilon, climatic_element), dpi=fig.dpi)
+        fig.savefig('{}/{}_{}_{}_{}.png'.format(output_svr_path, "svr", "set_C", svr_epsilon, climatic_element), dpi=fig.dpi)
 
         debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
@@ -1044,7 +1044,7 @@ def main():
             plt.tight_layout()
             plt.show()
 
-            fig.savefig('{}/{}_{}_{}.png'.format(ouput_svr_path, "svr", "prediction", climatic_element), dpi=fig.dpi)
+            fig.savefig('{}/{}_{}_{}.png'.format(output_svr_path, "svr", "prediction", climatic_element), dpi=fig.dpi)
 
         debug("\nObtendo metricas", "cyan", debug_mode)
 
@@ -1067,9 +1067,9 @@ def main():
         debug(f'RMSE: {svr["rmse"]}', debug=debug_mode)
         debug(f'MAE:  {svr["mae"]}', debug=debug_mode)
         
-        debug(f"\nSalvando metricas no diretorio: {ouput_svr_path}", "cyan", debug_mode)
+        debug(f"\nSalvando metricas no diretorio: {output_svr_path}", "cyan", debug_mode)
 
-        dict_to_json_file(ouput_svr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svr)
+        dict_to_json_file(output_svr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svr)
 
         debug("SUCESSO!", "green", debug_mode)
 
@@ -1106,10 +1106,8 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode
     pprint.pprint(statistics_processed)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-    output_file_raw       = "{}/statistics_raw_{}".format(output_folder, gas_sensor)
-    output_file_processed = "{}/statistics_processed_{}".format(output_folder, gas_sensor)
-
-    if not os.path.exists(output_folder): os.makedirs(output_folder)
+    output_file_raw       = "{}/statistics_raw_{}.json".format(output_folder, gas_sensor)
+    output_file_processed = "{}/statistics_processed_{}.json".format(output_folder, gas_sensor)
     
     dict_to_json_file(output_file_raw, statistics_raw)
     dict_to_json_file(output_file_processed, statistics_processed)
