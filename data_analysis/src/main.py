@@ -315,6 +315,10 @@ def main():
 
             debug("SUCESSO!", "green", debug_mode)
     if option == 2:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("---------------------------- K-NEAREST NEIGHBORS ---------------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         column_under_analysis = "Value"
 
@@ -448,6 +452,10 @@ def main():
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 3:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("------------------------------- RANDOM FOREST ------------------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         column_under_analysis = "Value"
 
@@ -583,6 +591,10 @@ def main():
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 4:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("--------------------------- SUPPORT VECTOR MACHINE -------------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         # features_list         = ["temp_value"]
         column_under_analysis = "Value"
@@ -689,6 +701,10 @@ def main():
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 5:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("-------------------------- REDES NEURAIS ARTIFICIAIS -----------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         # features_list         = ["temp_value"]
         column_under_analysis = "Value"
@@ -814,6 +830,10 @@ def main():
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 6:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("---------------------------- K-NEAREST REGRESSION---------------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         features_list         = ["rh_value"]
         column_under_analysis = "Value"
@@ -942,6 +962,10 @@ def main():
 
         debug("SUCESSO!", "green", debug_mode)
     if option == 7:
+        debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
+        debug("-------------------------- SUPPORT VECTOR REGRESSION -----------------------", "cyan", debug_mode)
+        debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
+
         features_list         = ["temp_value", "rh_value"]
         # features_list         = ["temp_value"]
         column_under_analysis = "Value"
