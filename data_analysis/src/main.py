@@ -6,15 +6,27 @@ from regressions  import *
 import matplotlib.pyplot as plt
 import numpy             as np
 
+import math
 import pprint
 import sys
 import os
 
 from sklearn.model_selection import train_test_split
-from sklearn.neighbors 		 import KNeighborsClassifier
+from sklearn.neighbors 		 import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.ensemble 		 import RandomForestClassifier
-from scipy 					 import stats
-from sklearn                 import preprocessing
+from sklearn.metrics 		 import confusion_matrix, classification_report
+from sklearn.svm 			 import SVC, SVR, LinearSVR
+
+from tensorflow.keras.models    import Sequential, load_model
+from tensorflow.keras.layers    import *
+from tensorflow.keras.callbacks import ModelCheckpoint
+from tensorflow.keras.metrics   import RootMeanSquaredError, MeanSquaredError, MeanAbsoluteError, MeanAbsoluteError
+from tensorflow.keras.utils     import plot_model
+
+from sklearn.model_selection import train_test_split
+from sklearn.metrics 		 import confusion_matrix, classification_report
+from sklearn.utils           import class_weight
+
 
 debug_mode  = True
 config_path = "config.json"
@@ -79,8 +91,12 @@ def main():
 
         print(f"{i} - {key} ({description})")
         i += 1
+    print(f"{i} - Sair")
+    
+    option = get_number_by_range(1, i)
 
-    option     = get_number_by_range(1, i-1)
+    if option == i: sys.exit(0)
+
     gas_sensor = list(gas_options.items())[option - 1][0]
     gas_name   = config["gas_name"][gas_sensor]
 
@@ -107,13 +123,36 @@ def main():
     # print(gas_df.head())
 
     input_text   = "Selecao do algoritmo de analise:\n"
-    options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Redes Neurais Artificiais", "5) Sair"]
-    
+    options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Sair"]
+
     print(input_text)
     for i in options_list:
         print(i)
 
     option = get_number_by_range(1, len(options_list))
+    
+    if option == 8:
+        sys.exit(0)
+
+    column_under_analysis = "Value"
+
+    gas_df_without_nan = gas_df.dropna()
+
+    sts = open_json_file(f"output/statistics_processed_{gas_sensor}")
+
+    values_list             = gas_df_without_nan[column_under_analysis].tolist()
+    # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
+    categorical_values_list = []
+
+    for v in values_list:
+        if   v >= sts["75%"]: categorical_values_list.append("alert")
+        elif v >= sts["50%"]: categorical_values_list.append("high")
+        elif v >= sts["25%"]: categorical_values_list.append("moderate")
+        else:                 categorical_values_list.append("low")
+
+    gas_df_without_nan["categorical_values"] = categorical_values_list
+
+    print(gas_df_without_nan.head())
 
     if option == 1:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
@@ -131,14 +170,18 @@ def main():
         if lin_reg_option == 1:
             debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR SIMPLES", debug=debug_mode)
             
+            # features_list         = ["rh_value"]
+            features_list         = ["temp_value"]
+            column_under_analysis = "Value"
+
             window_size = 60
-            gas_df_without_nan = gas_df.dropna()
-            
             # x = gas_df_without_nan[f'ma_{window_size}_temp'].tolist()
             # y = gas_df_without_nan[f'ma_{window_size}_gas'].tolist()
-            # x = gas_df_without_nan['temp_value'].tolist()
-            x = gas_df_without_nan['rh_value'].tolist()
-            y = gas_df_without_nan['Value'].tolist()
+            x = gas_df_without_nan[features_list].values
+            y = gas_df_without_nan[column_under_analysis].values
+            # x = gas_df_without_nan['rh_value'].tolist()
+
+            climatic_element = "_".join(features_list)
 
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
@@ -180,29 +223,42 @@ def main():
 
             ouput_slr_path = "output/simple_linear_regression"
 
+            if not os.path.exists(output_folder): os.makedirs(output_folder)
             if not os.path.exists(ouput_slr_path): os.makedirs(ouput_slr_path)
 
             debug(f"\nSalvando metricas no diretorio: {ouput_slr_path}", "cyan", debug_mode)
 
             dict_to_json_file(ouput_slr_path + "/metrics.json", slr_dict)
+            dict_to_json_file(ouput_slr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", slr_dict)
+
 
             debug("SUCESSO!", "green", debug_mode)
 
-            plt.scatter(X_test, y_test, color="black")
-            plt.plot(X_test, y_pred, color="blue", linewidth=3)
+            fig, ax1 = plt.subplots()
+            x_label  = "Temperatura [ºC]" if climatic_element == "temp_value" else "RH [%]" if climatic_element == "rh_value" else "feature variation"
+
+            ax1.set_title(f"Reta de regressao ({gas_sensor} [ppm] - {x_label})", size=25)
+            ax1.plot(X_test, y_pred, color="blue", linewidth=3)
+            ax1.scatter(X_test, y_test, color="black")
+            ax1.set_xlabel(x_label, size=25)
+            ax1.set_ylabel(f"Concentracao - {gas_sensor} [ppm]", size=25)
+            plt.grid()
             plt.show()
+
+            fig.tight_layout()
+
+            fig.savefig('{}/{}_{}_{}.png'.format(ouput_slr_path, "slr", "regression_line", climatic_element), dpi=fig.dpi)
+
         if lin_reg_option == 2:
             debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR MULTIPLA", debug=debug_mode)
             
-            window_size = 60
-            gas_df_without_nan = gas_df.dropna()
+            features_list         = ["temp_value", "rh_value"]
+            column_under_analysis = "Value"
 
-            print(gas_df_without_nan.head())
+            climatic_element = "_".join(features_list)
 
-            # x = gas_df_without_nan[["temp_value", "rh_value"]]
-            x = gas_df_without_nan[[f'ma_{window_size}_temp', f'ma_{window_size}_rh']]
-            # y = gas_df_without_nan["Value"]
-            y = gas_df_without_nan[f'ma_{window_size}_gas']
+            x = gas_df_without_nan[features_list].values
+            y = gas_df_without_nan[column_under_analysis].values
             
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
@@ -243,86 +299,86 @@ def main():
             debug(f'RMSE: {mlr_dict["rmse"]}', debug=debug_mode)
             debug(f'MAE:  {mlr_dict["mae"]}', debug=debug_mode)
 
-            ouput_slr_path = "output/multiple_linear_regression"
+            ouput_mlr_path = "output/multiple_linear_regression"
 
-            if not os.path.exists(ouput_slr_path): os.makedirs(ouput_slr_path)
+            if not os.path.exists(ouput_mlr_path): os.makedirs(ouput_mlr_path)
 
-            debug(f"\nSalvando metricas no diretorio: {ouput_slr_path}", "cyan", debug_mode)
+            debug(f"\nSalvando metricas no diretorio: {ouput_mlr_path}", "cyan", debug_mode)
 
-            dict_to_json_file(ouput_slr_path + "/metrics.json", mlr_dict)
+            dict_to_json_file(ouput_mlr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", mlr_dict)
 
             debug("SUCESSO!", "green", debug_mode)
-
-            plt.scatter(X_test, y_test, color="black")
-            plt.plot(X_test, y_pred, color="blue", linewidth=3)
-            plt.show()
     if option == 2:
-        gas_df_without_nan = gas_df.dropna()
+        features_list         = ["temp_value", "rh_value"]
+        column_under_analysis = "Value"
 
-        print(gas_df_without_nan.head())
+        climatic_element = "_".join(features_list)
 
-        x = gas_df_without_nan[["temp_value", "rh_value"]].values
-        # y = gas_df_without_nan["Value"].values
-        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
-        y = gas_df_without_nan["ma_60_gas"].values
+        values_list             = gas_df_without_nan[column_under_analysis].tolist()
+        # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
+        categorical_values_list = []
 
-        max_neighbors = 25
-        neighbors     = np.arange(1, max_neighbors)
+        for v in values_list:
+            if   v >= sts["75%"]: categorical_values_list.append(3)
+            elif v >= sts["50%"]: categorical_values_list.append(2)
+            elif v >= sts["25%"]: categorical_values_list.append(1)
+            else:                 categorical_values_list.append(0)
 
-        test_accuracy_knn  = np.empty(len(neighbors))
-        knn_precision_list = []
-        rf_precision_list  = []
-        k_variation 	   = []
+        gas_df_without_nan["categorical_values"] = categorical_values_list
 
-        i = 0
-        while i < 2:
-            print(f"INCIANDO LACO {i}\n\n")
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan["categorical_values"].values
+
+        neighbors         = 25
+        neighbors         = np.arange(1,neighbors)
+        test_accuracy_knn = np.empty(len(neighbors))
+
+        knn_accuracy_list         = []
+        k_variation 	          = []
+
+        max_tries = 10
+        i         = 0
+        while i < max_tries:
+            debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
             X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
-
-            y_train = np.ravel(y_train)
-            y_test  = np.ravel(y_test)
-            
-            lab_enc = preprocessing.LabelEncoder()
-            y_train = lab_enc.fit_transform(y_train)
-            y_test  = lab_enc.fit_transform(y_test)
 
             for j,k in enumerate(neighbors):
                 knn = KNeighborsClassifier(n_neighbors=k)
             
                 #divide o modelo
                 knn.fit(X_train, y_train)	
-                    
-                # Calcula a precisao dos dados de teste
+
+                # Calcula a acuracia dos dados de teste
                 test_accuracy_knn[j] = knn.score(X_test, y_test)
 
-            knn_precision_list.append(max(test_accuracy_knn))
-            k_variation.append(np.argmax(test_accuracy_knn))
+            knn_accuracy_list.append(max(test_accuracy_knn))
+            k_variation.append(np.argmax(test_accuracy_knn) + 1)
 
             i += 1
 
-        k_variation = np.array(k_variation)
-        media_knn 	= np.mean(k_variation)
-        std_knn 	= np.std(k_variation)
+        k_variation      = np.array(k_variation)
+        k_variation_mean = np.mean(k_variation)
 
-        knn_precision_list = np.array(knn_precision_list)
-
-        knn_media = np.mean(knn_precision_list)
-
-        print("-------K-NN-------")
-        print("Media: " + str(knn_media))
+        knn_accuracy_list   = np.array(knn_accuracy_list)
+        knn_accuracy_mean   = np.mean(knn_accuracy_list)
+        
+        print("Acuracia media: " + str(knn_accuracy_mean))
 
         print("-------Vizinhos-------")
-        print("Media: " + str(media_knn))
-        print("Min: " + str(media_knn - std_knn))
-        print("Max: " + str(media_knn + std_knn))
-        print("numd e vizinhos mais repetido: " + str(stats.mode(k_variation, keepdims = True)))
+        print("Quantidade de vizinhos com melhor acuracia em cada execucao: " + str(k_variation))
+        print("Media: " + str(k_variation_mean))
+        print("Min:   " + str(np.amin(k_variation)))
+        print("Max:   " + str(np.amax(k_variation)))
+
+        most_repeated_k = np.bincount(k_variation).argmax()
+        print("numero de vizinhos mais repetido: " + str(most_repeated_k))
 
         # Verificando precisao do K-NN e Random Forest para diferentes valores de K e arvores de decisao
         fig, ax1 = plt.subplots()
 
         ax1.set_title('k-NN variando numero de vizinhos proximos', size=25)
-        ax1.plot(neighbors, test_accuracy_knn, label='Precisao K-NN')
+        ax1.plot(neighbors, test_accuracy_knn, label='Acuracia K-NN')
         ax1.set_xlabel('Numero de vizinhos proximos', size=25)
         ax1.set_ylabel('Acuracia', size=25)
         plt.grid()
@@ -337,35 +393,89 @@ def main():
 
         fig.savefig('{}/{}_{}.png'.format(ouput_knn_path, "knn", "variation"), dpi=fig.dpi)
 
+    ###########################################################################################
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        knn_classifier = KNeighborsClassifier(n_neighbors=most_repeated_k)
+        knn_classifier.fit(X_train, y_train)
+
+        knn_y_pred = knn_classifier.predict(X_test)
+
+        print("---------------------------------")
+        print("Matriz de confusao")
+        print(confusion_matrix(y_test, knn_y_pred))
+
+        print("---------------------------------")
+        print("Cross tab")
+        print(pd.crosstab(y_test, knn_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
+
+        print("---------------------------------")
+        print("Diagnostico de classificacao")
+        print(classification_report(y_test,knn_y_pred))
+
+        conf_matrix = confusion_matrix(y_true=y_test, y_pred=knn_y_pred)
+        fig, ax = plt.subplots(figsize=(7.5, 7.5))
+        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
+        for i in range(conf_matrix.shape[0]):
+            for j in range(conf_matrix.shape[1]):
+                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
+        
+        plt.xlabel('Predicao (classificacao)', fontsize=18)
+        plt.ylabel('Valor real', fontsize=18)
+        plt.title('Matriz de confusao - KNN', fontsize=18)
+        plt.show()
+        fig.savefig(f"{ouput_knn_path}/knn_confusion_matrix.png")
+
+        knn         = {}
+        knn["r2"]   = get_r2_score(y_test, knn_y_pred)
+        knn["mse"]  = get_MSE(y_test, knn_y_pred)
+        knn["rmse"] = get_RMSE(y_test, knn_y_pred)
+        knn["mae"]  = get_MAE(y_test, knn_y_pred)
+
+        debug(f'R^2:  {knn["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {knn["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {knn["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {knn["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {ouput_knn_path}", "cyan", debug_mode)
+
+        dict_to_json_file(ouput_knn_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knn)
+
+        debug("SUCESSO!", "green", debug_mode)
     if option == 3:
-        gas_df_without_nan = gas_df.dropna()
+        features_list         = ["temp_value", "rh_value"]
+        column_under_analysis = "Value"
 
-        print(gas_df_without_nan.head())
+        climatic_element = "_".join(features_list)
 
-        x = gas_df_without_nan[["temp_value", "rh_value"]].values
-        # y = gas_df_without_nan["Value"].values
-        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
-        y = gas_df_without_nan["ma_60_gas"].values
+        values_list             = gas_df_without_nan[column_under_analysis].tolist()
+        # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
+        categorical_values_list = []
 
-        max_trees = 25
-        trees 	  = np.arange(1,max_trees)
+        for v in values_list:
+            if   v >= sts["75%"]: categorical_values_list.append(3)
+            elif v >= sts["50%"]: categorical_values_list.append(2)
+            elif v >= sts["25%"]: categorical_values_list.append(1)
+            else:                 categorical_values_list.append(0)
 
-        test_accuracy_random_forest  = np.empty(len(trees))
-        rf_precision_list            = []
-        trees_variation              = []
+        gas_df_without_nan["categorical_values"] = categorical_values_list
 
-        i = 0
-        while i < 2:
-            print(f"INCIANDO LACO {i}\n\n")
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan["categorical_values"].values
+
+        max_trees                   = 25
+        trees                       = np.arange(1,max_trees)
+        test_accuracy_random_forest = np.empty(len(trees))
+
+        rf_accuracy_list = []
+        trees_variation  = []
+
+        max_tries = 10
+        i         = 0
+        while i < max_tries:
+            debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
             X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
-
-            y_train = np.ravel(y_train)
-            y_test  = np.ravel(y_test)
-
-            lab_enc = preprocessing.LabelEncoder()
-            y_train = lab_enc.fit_transform(y_train)
-            y_test  = lab_enc.fit_transform(y_test)
 
             for j,k in enumerate(trees):
                 random_forest = RandomForestClassifier(n_estimators=k)  
@@ -376,32 +486,32 @@ def main():
                 # Calcula a precisao dos dados de teste
                 test_accuracy_random_forest[j] = random_forest.score(X_test, y_test)
 
-            rf_precision_list.append(max(test_accuracy_random_forest))
+            rf_accuracy_list.append(max(test_accuracy_random_forest))
             trees_variation.append(np.argmax(test_accuracy_random_forest))
 
             i += 1
 
-        trees_variation = np.array(trees_variation)
-        media_rf 		= np.mean(trees_variation)
-        std_rf 			= np.std(trees_variation)
+        trees_variation     = np.array(trees_variation)
+        tree_variation_mean = np.mean(trees_variation)
 
-        rf_precision_list  = np.array(rf_precision_list)
-        rf_media           = np.mean(rf_precision_list)
+        rf_accuracy_list  = np.array(rf_accuracy_list)
+        rf_accuracy_mean  = np.mean(rf_accuracy_list)
 
-        print("-------Random Forest-------")
-        print("Media: " + str(rf_media))
+        print("Acuracia media: " + str(rf_accuracy_mean))
 
         print("-------Arvores-------")
-        print("Media: " + str(media_rf))
-        print("Min: " + str(media_rf - std_rf))
-        print("Max: " + str(media_rf + std_rf))
+        print("Quantidade de arvores com melhor acuracia em cada execucao: " + str(trees_variation))
+        print("Media: " + str(tree_variation_mean))
+        print("Min:   " + str(np.amin(trees_variation)))
+        print("Max:   " + str(np.amax(trees_variation)))
 
-        print("num de arvores mais repetido: " + str(stats.mode(trees_variation, keepdims = True)))
+        most_repeated_trees = np.bincount(trees_variation).argmax()
+        print("numero de arvores mais repetido: " + str(most_repeated_trees))
 
        # Verificando acuracia do Random Forest para diferentes valores de arvores de decisao
         fig, ax1 = plt.subplots()
 
-        ax1.set_title('Random Forest variando numero de vizinhos proximos', size=25)
+        ax1.set_title('Random Forest variando numero arvores de decisao', size=25)
         ax1.plot(trees, test_accuracy_random_forest, label='Acuracia Random Forest')
         ax1.set_xlabel('Numero de arvores de decisao', size=25)
         ax1.set_ylabel('Acuracia', size=25)
@@ -417,8 +527,551 @@ def main():
 
         fig.savefig('{}/{}_{}.png'.format(output_rf_path, "trees", "variation"), dpi=fig.dpi)
 
+    ###########################################################################################
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        rf_classifier = RandomForestClassifier(n_estimators=most_repeated_trees)
+        rf_classifier.fit(X_train, y_train)
+
+        rf_y_pred = rf_classifier.predict(X_test)
+
+        print("---------------------------------")
+        print("Matriz de confusao")
+        print(confusion_matrix(y_test, rf_y_pred))
+
+        print("---------------------------------")
+        print("Cross tab")
+        print(pd.crosstab(y_test, rf_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
+
+        print("---------------------------------")
+        print("Diagnostico de classificacao")
+        print(classification_report(y_test,rf_y_pred))
+
+        conf_matrix = confusion_matrix(y_true=y_test, y_pred=rf_y_pred)
+        fig, ax = plt.subplots(figsize=(7.5, 7.5))
+        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
+        for i in range(conf_matrix.shape[0]):
+            for j in range(conf_matrix.shape[1]):
+                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
+        
+        plt.xlabel('Predicao (classificacao)', fontsize=18)
+        plt.ylabel('Valor real', fontsize=18)
+        plt.title('Matriz de confusao - Random Forest', fontsize=18)
+        plt.show()
+        fig.savefig(f"{output_rf_path}/rf_confusion_matrix.png")
+
+        debug("\nObtendo metricas", "cyan", debug_mode)
+
+        rf         = {}
+        rf["r2"]   = get_r2_score(y_test, rf_y_pred)
+        rf["mse"]  = get_MSE(y_test, rf_y_pred)
+        rf["rmse"] = get_RMSE(y_test, rf_y_pred)
+        rf["mae"]  = get_MAE(y_test, rf_y_pred)
+
+        debug(f'R^2:  {rf["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {rf["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {rf["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {rf["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {output_rf_path}", "cyan", debug_mode)
+
+        dict_to_json_file(output_rf_path + f"/metrics_{gas_sensor}_{climatic_element}.json", rf)
+
+        debug("SUCESSO!", "green", debug_mode)
+    if option == 4:
+        features_list         = ["temp_value", "rh_value"]
+        # features_list         = ["temp_value"]
+        column_under_analysis = "Value"
+
+        climatic_element = "_".join(features_list)
+
+        values_list             = gas_df_without_nan[column_under_analysis].tolist()
+        # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
+        categorical_values_list = []
+
+        for v in values_list:
+            if   v >= sts["75%"]: categorical_values_list.append(3)
+            elif v >= sts["50%"]: categorical_values_list.append(2)
+            elif v >= sts["25%"]: categorical_values_list.append(1)
+            else:                 categorical_values_list.append(0)
+
+        gas_df_without_nan["categorical_values"] = categorical_values_list
+
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan["categorical_values"].values
+
+        svm_accuracy_list = []
+
+        max_tries = 10
+        i         = 0
+        while i < max_tries:
+            debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
+
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            svm_classifier = SVC(kernel="linear")
+            svm_classifier.fit(X_train, y_train)
+
+            svm_accuracy_list.append(svm_classifier.score(X_test, y_test))
+
+            i += 1
+
+        svm_accuracy_list = np.array(svm_accuracy_list)
+        svm_accuracy_mean = np.mean(svm_accuracy_list)
+
+        print("Acuracia media: " + str(svm_accuracy_mean))
+
+        output_svm_path = "output/svm"
+
+        if not os.path.exists(output_folder): os.makedirs(output_folder)
+        if not os.path.exists(output_svm_path): os.makedirs(output_svm_path)
+    ###########################################################################################
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        svm_classifier = SVC(kernel="linear")
+        svm_classifier.fit(X_train, y_train)
+
+        # from mlxtend.plotting import plot_decision_regions
+
+        # print(y_train)
+
+        # # Plotting decision regions
+        # plot_decision_regions(X_train, y_train, clf=svm_classifier, legend=2)
+        # plt.show()
+
+        svm_y_pred = svm_classifier.predict(X_test)
+
+        print("---------------------------------")
+        print("Matriz de confusao")
+        print(confusion_matrix(y_test, svm_y_pred))
+
+        print("---------------------------------")
+        print("Cross tab")
+        print(pd.crosstab(y_test, svm_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
+
+        print("---------------------------------")
+        print("Diagnostico de classificacao")
+        print(classification_report(y_test,svm_y_pred))
+
+        conf_matrix = confusion_matrix(y_true=y_test, y_pred=svm_y_pred)
+        fig, ax = plt.subplots(figsize=(7.5, 7.5))
+        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
+
+        for i in range(conf_matrix.shape[0]):
+            for j in range(conf_matrix.shape[1]):
+                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
+        
+        plt.xlabel('Predicao (classificacao)', fontsize=18)
+        plt.ylabel('Valor real', fontsize=18)
+        plt.title('Matriz de confusao - SVM', fontsize=18)
+        plt.show()
+        fig.savefig(f"{output_svm_path}/svm_confusion_matrix.png")
+
+        debug("\nObtendo metricas", "cyan", debug_mode)
+
+        svm         = {}
+        svm["r2"]   = get_r2_score(y_test, svm_y_pred)
+        svm["mse"]  = get_MSE(y_test, svm_y_pred)
+        svm["rmse"] = get_RMSE(y_test, svm_y_pred)
+        svm["mae"]  = get_MAE(y_test, svm_y_pred)
+
+        debug(f'R^2:  {svm["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {svm["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {svm["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {svm["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {output_svm_path}", "cyan", debug_mode)
+
+        dict_to_json_file(output_svm_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svm)
+
+        debug("SUCESSO!", "green", debug_mode)
     if option == 5:
-        sys.exit()
+        features_list         = ["temp_value", "rh_value"]
+        # features_list         = ["temp_value"]
+        column_under_analysis = "Value"
+
+        # x = gas_df_without_nan[[climatic_element, "rh_value"]].values
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan[column_under_analysis].values
+        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
+        # y = gas_df_without_nan["categorical_values"].values
+
+        climatic_element = "_".join(features_list)
+
+        values_list             = gas_df_without_nan[column_under_analysis].tolist()
+        # values_list             = gas_df_without_nan["ma_60_gas"].tolist()
+        categorical_values_list = []
+
+        for v in values_list:
+            if   v >= sts["75%"]: categorical_values_list.append(3)
+            elif v >= sts["50%"]: categorical_values_list.append(2)
+            elif v >= sts["25%"]: categorical_values_list.append(1)
+            else:                 categorical_values_list.append(0)
+
+        gas_df_without_nan["categorical_values"] = categorical_values_list
+
+        predict_class = "categorical_values"
+    
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan[predict_class].values
+
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        input_layer_size        = len(features_list)                                               # camada de entrada, igual a quantidade de features consideradas na analise
+        output_dense_layer_size = 4                                                                # camada de saida, igual a quantidade de classes
+        # dense_layer_size        = pow(2,(math.ceil(input_layer_size + output_dense_layer_size)/2)) # quantidade de neuronios na camada densa
+        dense_layer_size        = 64                                                               # quantidade de neuronios na camada densa
+        n_epochs                = 30                                                               # quantiddade de vezes que o treinamento ira acontecer
+
+        output_ann_path = 'output/ann'
+
+        if not os.path.exists(output_folder): os.makedirs(output_folder)
+        if not os.path.exists(output_ann_path): os.makedirs(output_ann_path)
+
+        debug("Ajustando pesos das classes...", "blue", debug_mode)
+
+        classes = np.unique(y_train)
+        weights = class_weight.compute_class_weight(class_weight='balanced', classes=classes, y=y_train)
+        weights = {0: weights[0], 1: weights[1], 2: weights[2], 3: weights[3]}
+
+        debug(f"Pesos ajustados: {weights}", "green", debug_mode)
+
+        model = Sequential()
+        model.add(InputLayer(input_shape=(input_layer_size,)))
+        model.add(Dense(dense_layer_size, activation= "relu"))
+        model.add(Dropout(0.2))
+        model.add(Dense(output_dense_layer_size, activation="softmax"))
+        
+        debug("Estrutura da Rede Neural", "cyan", debug_mode)
+        model.summary()
+        plot_model(model, to_file=f"{output_ann_path}/ann_model.png")
+
+        cp           = ModelCheckpoint(output_ann_path, save_best_only=True) # Salva somente a melhor execucao
+        metrics_list = [RootMeanSquaredError(), MeanAbsoluteError(), MeanSquaredError(), "accuracy"]
+
+        debug("Compilando modelo da Rede Neural...", "blue", debug_mode)
+        # model.compile(optimizer="rmsprop", loss="sparse_categorical_crossentropy", metrics=metrics_list)
+        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=metrics_list)
+
+        debug("Sucesso!", "green", debug_mode)
+        debug("Realizando treinamento...", "blue", debug_mode)
+
+        model.fit(x=X_train, y=y_train, epochs=n_epochs, validation_data=(X_test, y_test), callbacks=[cp], class_weight=weights)
+
+        debug("Sucesso!", "green", debug_mode)
+        debug("Carregando modelo com melhor resultado obtido...", "blue", debug_mode)
+
+        ann_model = load_model(output_ann_path)
+
+        debug("Sucesso!", "green", debug_mode)
+        debug("Extraindo metricas de desempenho...", "blue", debug_mode)
+
+        ann_y_pred = np.argmax(ann_model.predict(X_test), axis=-1)
+
+        print("\n---------------------------------")
+        print("Matriz de confusao")
+        print(confusion_matrix(y_test, ann_y_pred))
+
+        print("---------------------------------")
+        print("Cross tab")
+        print(pd.crosstab(y_test, ann_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
+
+        print("---------------------------------")
+        print("Diagnostico de classificacao")
+        print(classification_report(y_test, ann_y_pred))
+
+        conf_matrix = confusion_matrix(y_true=y_test, y_pred=ann_y_pred)
+        fig, ax = plt.subplots(figsize=(7.5, 7.5))
+        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
+        for i in range(conf_matrix.shape[0]):
+            for j in range(conf_matrix.shape[1]):
+                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
+        
+        plt.xlabel('Predicao (classificacao)', fontsize=18)
+        plt.ylabel('Valor real', fontsize=18)
+        plt.title('Matriz de confusao - Rede Neural Artificial', fontsize=18)
+        plt.show()
+        fig.savefig(f"{output_ann_path}/ann_confusion_matrix.png")
+
+        debug("\nObtendo metricas", "cyan", debug_mode)
+
+        ann         = {}
+        ann["r2"]   = get_r2_score(y_test, ann_y_pred)
+        ann["mse"]  = get_MSE(y_test, ann_y_pred)
+        ann["rmse"] = get_RMSE(y_test, ann_y_pred)
+        ann["mae"]  = get_MAE(y_test, ann_y_pred)
+
+        debug(f'R^2:  {ann["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {ann["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {ann["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {ann["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {output_ann_path}", "cyan", debug_mode)
+
+        dict_to_json_file(output_ann_path + f"/metrics_{gas_sensor}_{climatic_element}.json", ann)
+
+        debug("SUCESSO!", "green", debug_mode)
+    if option == 6:
+        features_list         = ["temp_value", "rh_value"]
+        features_list         = ["rh_value"]
+        column_under_analysis = "Value"
+
+        # x = gas_df_without_nan[[climatic_element, "rh_value"]].values
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan[column_under_analysis].values
+        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
+        # y = gas_df_without_nan["categorical_values"].values
+
+        climatic_element = "_".join(features_list)
+
+        # knr_weight        = "distance"
+        knr_weight        = "uniform"
+        neighbors         = 25
+        neighbors         = np.arange(1,neighbors)
+        test_accuracy_knr = np.empty(len(neighbors))
+
+        knr_accuracy_list         = []
+        k_variation 	          = []
+
+        debug("Iniciando calibracao da quantidade de vizinhos proximos", "cyan", debug_mode)
+
+        max_tries = 10
+        i         = 0
+        while i < max_tries:
+            debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
+
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            for j,k in enumerate(neighbors):
+                knr = KNeighborsRegressor(n_neighbors=k, weights=knr_weight)
+            
+                #divide o modelo
+                knr.fit(X_train, y_train)
+
+                # Calcula a acuracia dos dados de teste
+                test_accuracy_knr[j] = knr.score(X_test, y_test)
+
+            knr_accuracy_list.append(max(test_accuracy_knr))
+            k_variation.append(np.argmax(test_accuracy_knr) + 1)
+
+            i += 1
+
+        k_variation      = np.array(k_variation)
+        k_variation_mean = np.mean(k_variation)
+
+        knr_accuracy_list = np.array(knr_accuracy_list)
+        knr_accuracy_mean = np.mean(knr_accuracy_list)
+        
+        print("Acuracia media: " + str(knr_accuracy_mean))
+
+        print("-------Vizinhos-------")
+        print("Quantidade de vizinhos com melhor acuracia em cada execucao: " + str(k_variation))
+        print("Media: " + str(k_variation_mean))
+        print("Min:   " + str(np.amin(k_variation)))
+        print("Max:   " + str(np.amax(k_variation)))
+
+        most_repeated_k = np.bincount(k_variation).argmax()
+        print("numero de vizinhos mais repetido: " + str(most_repeated_k))
+
+        output_knr_path = "output/knr"
+
+        if not os.path.exists(output_folder): os.makedirs(output_folder)
+        if not os.path.exists(output_knr_path): os.makedirs(output_knr_path)
+
+        fig, ax1 = plt.subplots()
+
+        ax1.set_title('k-NR variando numero de vizinhos proximos', size=25)
+        ax1.plot(neighbors, test_accuracy_knr, label='Acuracia K-NN')
+        ax1.set_xlabel('Numero de vizinhos proximos', size=25)
+        ax1.set_ylabel('Acuracia', size=25)
+        plt.grid()
+        plt.show()
+
+        fig.tight_layout()
+
+        fig.savefig('{}/{}_{}_{}.png'.format(output_knr_path, "knr", "variation", climatic_element), dpi=fig.dpi)
+
+    ###########################################################################################
+        debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
+
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
+
+        knr_classifier = KNeighborsRegressor(n_neighbors=most_repeated_k, weights=knr_weight)
+        knr_classifier.fit(X_train, y_train)
+
+        debug(knr_classifier.get_params())
+
+        debug("\nObtendo dados de teste", "cyan", debug_mode)
+
+        knr_y_pred = knr_classifier.predict(X_test)
+
+        if len(features_list) == 1:
+            fig, ax1 = plt.subplots()
+
+            ax1.set_title("KNeighborsRegressor (k = %i, weights = '%s')" % (most_repeated_k, knr_weight), size=25)
+            ax1.scatter(X_train, y_train, color="darkorange", label="Dados de treinamento")
+            ax1.scatter(X_test, knr_y_pred, color="navy", label="Predicao")
+            x_label = "Temperatura [ºC]" if climatic_element == "temp_value" else "RH [%]" if climatic_element == "rh_value" else "feature variation"
+            ax1.set_xlabel(x_label, size=25)
+            ax1.set_ylabel(f"Concentracao - {gas_sensor} [ppm]", size=25)
+            plt.grid()
+            plt.tight_layout()
+            plt.show()
+
+            fig.savefig('{}/{}_{}_{}.png'.format(output_knr_path, "knr", "prediction", climatic_element), dpi=fig.dpi)
+
+        debug("\nObtendo metricas", "cyan", debug_mode)
+
+        knr         = {}
+        knr["r2"]   = get_r2_score(y_test, knr_y_pred)
+        knr["mse"]  = get_MSE(y_test, knr_y_pred)
+        knr["rmse"] = get_RMSE(y_test, knr_y_pred)
+        knr["mae"]  = get_MAE(y_test, knr_y_pred)
+
+        debug(f'R^2:  {knr["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {knr["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {knr["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {knr["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {output_knr_path}", "cyan", debug_mode)
+
+        dict_to_json_file(output_knr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knr)
+
+        debug("SUCESSO!", "green", debug_mode)
+    if option == 7:
+        features_list         = ["temp_value", "rh_value"]
+        # features_list         = ["temp_value"]
+        column_under_analysis = "Value"
+
+        # x = gas_df_without_nan[[climatic_element, "rh_value"]].values
+        x = gas_df_without_nan[features_list].values
+        y = gas_df_without_nan[column_under_analysis].values
+        # x = gas_df_without_nan[["ma_60_temp", "ma_60_rh"]].values
+        # y = gas_df_without_nan["categorical_values"].values
+
+        climatic_element = "_".join(features_list)
+
+        ouput_svr_path = "output/svr"
+
+        if not os.path.exists(output_folder): os.makedirs(output_folder)
+        if not os.path.exists(ouput_svr_path): os.makedirs(ouput_svr_path)
+
+        debug("\nCalibrando parametro de regularizacao (C)...", "cyan", debug_mode)
+
+        N                        = 500
+        c_array                  = np.linspace(0.1, 5, N)
+        svr_epsilon              = 20
+        svr_kernel_func          = "rbf"
+        test_mae_list            = []
+        perc_within_epsilon_list = []
+
+        for c in c_array:
+            # debug(f"Aplicando C = {c}")
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+            svr_regressor = SVR(kernel=svr_kernel_func, C=c, epsilon=svr_epsilon) if svr_kernel_func != "linear" else LinearSVR(C=c, epsilon=svr_epsilon)
+            svr_regressor.fit(X_train, y_train)
+            svr_y_pred = svr_regressor.predict(X_test)
+
+            test_mae        = get_MAE(y_test, svr_y_pred)
+            perc_within_eps = 100*np.sum(abs(y_test-svr_y_pred) <= svr_epsilon) / len(y_test)
+
+            test_mae_list.append(test_mae)
+            perc_within_epsilon_list.append(perc_within_eps)
+
+        m     = min(test_mae_list)
+        inds  = [i for i, j in enumerate(test_mae_list) if j == m]
+        svr_C = c_array[inds[0]]
+
+        debug(f"Melhor valor encontrado! C = {svr_C}", "green", debug_mode)
+
+        fig, ax1 = plt.subplots(figsize=(12,7))
+        ax1.set_title(f"Analise do parametro C para Epsilon = {svr_epsilon}", size=25)
+
+        color='green'
+        ax1.set_xlabel('variacao de C')
+        ax1.set_ylabel('% de dados dentro das margens de Epsilon', color=color)
+        ax1.scatter(c_array, perc_within_epsilon_list, color=color)
+        ax1.tick_params(axis='y', labelcolor=color)
+        plt.grid(color=color, which='both')
+
+        color='blue'
+        ax2 = ax1.twinx()  # instantiate a second axes that shares the same x-axis
+        ax2.set_ylabel('Erro absoluto medio (MAE)', color=color)  # we already handled the x-label with ax1
+        ax2.scatter(c_array, test_mae_list, color=color)
+        ax2.tick_params(axis='y', labelcolor=color)
+        plt.grid(color=color, which='both')
+        plt.show()
+
+        fig.savefig('{}/{}_{}_{}_{}.png'.format(ouput_svr_path, "svr", "set_C", svr_epsilon, climatic_element), dpi=fig.dpi)
+
+        debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
+
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+
+        debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
+
+        svr_regressor = SVR(kernel=svr_kernel_func, C=svr_C, epsilon=svr_epsilon) if svr_kernel_func != "linear" else LinearSVR(C=svr_C, epsilon=svr_epsilon)
+        svr_regressor.fit(X_train, y_train)
+
+        debug(svr_regressor.get_params(), )
+        debug("\nObtendo dados de teste", "cyan", debug_mode)
+
+        svr_y_pred = svr_regressor.predict(X_test)
+
+        if len(features_list) == 1:
+            svr_C    = "%.2f" % svr_C
+            fig, ax1 = plt.subplots()
+
+            ax1.set_title(f"Suppor Vector Regressor (C = {svr_C}, Epsilon = {svr_epsilon})", size=25)
+            ax1.scatter(X_train, y_train, color="green", label="Dados de treinamento")
+
+            if svr_kernel_func != "linear":
+                ax1.plot(X_test, svr_y_pred, color='navy')
+                ax1.plot(X_test, svr_y_pred+svr_epsilon, color='darkorange')
+                ax1.plot(X_test, svr_y_pred-svr_epsilon, color='darkorange')
+            else:
+                ax1.scatter(X_test, svr_y_pred, color='navy')
+                ax1.scatter(X_test, svr_y_pred+svr_epsilon, color='darkorange')
+                ax1.scatter(X_test, svr_y_pred-svr_epsilon, color='darkorange')
+
+            x_label = "Temperatura [ºC]" if climatic_element == "temp_value" else "RH [%]" if climatic_element == "rh_value" else "feature variation"
+            ax1.set_xlabel(x_label, size=25)
+            ax1.set_ylabel(f'Concentracao [{gas_sensor}] - ppm', size=25)
+            plt.grid()
+            plt.tight_layout()
+            plt.show()
+
+            fig.savefig('{}/{}_{}_{}.png'.format(ouput_svr_path, "svr", "prediction", climatic_element), dpi=fig.dpi)
+
+        debug("\nObtendo metricas", "cyan", debug_mode)
+
+        svr         = {}
+        svr["r2"]   = get_r2_score(y_test, svr_y_pred)
+        svr["mse"]  = get_MSE(y_test, svr_y_pred)
+        svr["rmse"] = get_RMSE(y_test, svr_y_pred)
+        svr["mae"]  = get_MAE(y_test, svr_y_pred)
+
+        if svr_kernel_func == "linear":
+            svr["coefficients"]              = {}
+            svr["coefficients"]["intercept"] = svr_regressor.intercept_.tolist()
+            svr["coefficients"]["coefs"]     = svr_regressor.coef_.tolist()
+
+            debug(f"Intercept:   {svr_regressor.intercept_}", debug=debug_mode)
+            debug(f"Coefficient: {svr_regressor.coef_}", debug=debug_mode)
+
+        debug(f'R^2:  {svr["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {svr["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {svr["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {svr["mae"]}', debug=debug_mode)
+        
+        debug(f"\nSalvando metricas no diretorio: {ouput_svr_path}", "cyan", debug_mode)
+
+        dict_to_json_file(ouput_svr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svr)
+
+        debug("SUCESSO!", "green", debug_mode)
 
 def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode):
     gas_value  = gas_df["Value"]
@@ -433,7 +1086,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode
     debug("Dados processados...", "cyan", debug_mode)
 
     debug("\nRemovendo dados fora dos limiares do sensor {}".format(gas_sensor), "blue", debug_mode)
-    gas_df_processed = remove_values_outside_range(gas_df, gas_value, range_ppb)
+    gas_df_processed = remove_values_outside_range(gas_df, "Value", range_ppb)
 
     gas_value_proc  = gas_df_processed["Value"]
     temp_value_proc = gas_df_processed["temp_value"]
@@ -442,7 +1095,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, debug_mode
     statistics_proc = get_statistics_data(gas_value_proc, temp_value_proc, rh_value_proc, range_ppb)
 
     debug("\nRemovendo outliers".format(gas_sensor), "blue", debug_mode)
-    gas_df_processed_out = remove_outliers_from_df(gas_df_processed, gas_value_proc, statistics_proc["lower_thr"], statistics_proc["upper_thr"])
+    gas_df_processed_out = remove_outliers_from_df(gas_df_processed, "Value", statistics_proc["lower_thr"], statistics_proc["upper_thr"])
 
     gas_value_out  = gas_df_processed_out["Value"]
     temp_value_out = gas_df_processed_out["temp_value"]

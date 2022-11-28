@@ -16,7 +16,7 @@ def open_json_file(path : str) -> dict:
 
 def dict_to_json_file(out_file_name, out_dict):
     with open(out_file_name, 'w') as fp:
-        json.dump(out_dict, fp, indent=0)
+        json.dump(out_dict, fp, indent=2)
 
 def load_config(config_path, debug_mode):
     debug("Abrindo arquivo de configuracao...", "blue", debug_mode)
