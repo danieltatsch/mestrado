@@ -7,15 +7,13 @@ def count_values_outside_range(gas_value, range_ppb):
     return greatter_than_range_count, less_than_zero_count
 
 def remove_values_outside_range(input_gas_df, gas_value, range_ppb):
-    gas_df = input_gas_df.copy()
+    gas_df = input_gas_df.reset_index(drop=True).copy()
 
-    # Get outside values range to exclude the correct indexes from dataset
-    greatter_than_range_index = gas_df[gas_value > range_ppb].index.tolist()
-    less_than_range_index     = gas_df[gas_value < 0].index.tolist()
+    greatter_than_range_index = gas_df.index[gas_df[gas_value] > range_ppb].tolist()
+    gas_df                    = gas_df.drop(gas_df.index[greatter_than_range_index])
 
-    # Remove values outside the sensor range
-    gas_df = gas_df.drop(gas_df.index[greatter_than_range_index])
-    gas_df = gas_df.drop(gas_df.index[less_than_range_index])
+    less_than_range_index = gas_df.index[gas_df[gas_value] < 0].tolist()
+    gas_df                = gas_df.drop(gas_df.index[less_than_range_index])
 
     return gas_df
 
@@ -51,14 +49,13 @@ def get_correlation(data1_df, data2_df):
     return correlation
 
 def remove_outliers_from_df(input_gas_df, gas_value, lower_thr, upper_thr):
-    gas_df = input_gas_df.copy()
+    gas_df = input_gas_df.reset_index(drop=True).copy()
 
-    # Get outliers list to exclude the correct indexes from dataset
-    greatter_than_range_index = gas_df[gas_value > upper_thr].index.tolist()
-    less_than_range_index     = gas_df[gas_value < lower_thr].index.tolist()
+    # print(gas_df.shape)
+    greatter_than_range_index = gas_df.index[gas_df[gas_value] > upper_thr].tolist()
+    gas_df                    = gas_df.drop(gas_df.index[greatter_than_range_index])
 
-    # Remove outliers
-    gas_df = gas_df.drop(gas_df.index[greatter_than_range_index])
-    gas_df = gas_df.drop(gas_df.index[less_than_range_index])
+    less_than_range_index = gas_df.index[gas_df[gas_value] < lower_thr].tolist()
+    gas_df                = gas_df.drop(gas_df.index[less_than_range_index])
 
     return gas_df

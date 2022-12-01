@@ -2,6 +2,7 @@ import json
 import colorama
 from   termcolor import colored
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def open_json_file(path : str) -> dict:
     data = {}
@@ -31,6 +32,18 @@ def debug(text, color=None, debug=True):
     if debug:
         print(colored(text, color)) if color is not None else print(text)
 
+def confirm_info(text=None):
+    input_options_list = ["s", "1", "n", "0"]
+    input_text         = "\nConfirmar informacoes? (S,1/N,0): " if text is None else f"\n{text} (S,1/N,0): "
+
+    while True:
+        option_str = input(input_text)
+
+        if option_str in input_options_list:
+            return option_str == "s" or option_str == "1"
+
+        debug("\nEntrada invalida!", "red", True)
+
 def get_number_by_range(lower_th, upper_th, text=None):
     input_text = text if text is not None else f"Selecione um numero entre {lower_th} e {upper_th}: "
 
@@ -48,6 +61,13 @@ def get_number_by_range(lower_th, upper_th, text=None):
         debug("\nEntrada invalida!", "red", True)
 
     return option
+
+def set_datatime_col(gas_df):
+    date_time_df             = pd.DataFrame()
+    date_time_col            = ['Year','Month','Day','Hour','Minute','Second']
+    date_time_df['datetime'] = (pd.to_datetime(gas_df[date_time_col], infer_datetime_format=False, format='%d/%m/%Y/%H/%M/%S'))
+
+    return date_time_df
 
 def plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
     # x     = gas_df_ma["datetime"]

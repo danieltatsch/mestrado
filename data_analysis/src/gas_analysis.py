@@ -3,23 +3,22 @@ import pandas as pd
 import sys
 
 class Gas_Analysis:
-    def __init__(self, config, gas_sensor, debug_mode):
-        self.gas_df       = None
+    def __init__(self, gas_df, config, gas_sensor, debug_mode):
+        self.gas_df       = gas_df
         self.gas_analysis = gas_sensor
 
-        gas_df_path  = config["gas_sensors"][self.gas_analysis]
-        temp_df_path = config["climatic_elements"]["TEMP"]
-        rh_df_path   = config["climatic_elements"]["RH"]
+        features_data             = config["features_data"]
+        datasets_features_names   = list(features_data.keys())
+        datasets_features_paths   = [features_data[k][0] for k in datasets_features_names]
+        datasets_features_columns = [features_data[k][1] for k in datasets_features_names]
 
-        debug("Inicializando dataframes...\n", "blue", debug_mode)
-        debug("Gas em analise: {}".format(gas_df_path), None, debug_mode)
-        debug("Dataset temp:   {}".format(temp_df_path), None, debug_mode)
-        debug("Dataset RH:     {}".format(rh_df_path), None, debug_mode)
+        debug("Inicializando dataframes das features...", "blue", debug_mode)
 
         try:
-            self.gas_df = pd.read_csv(gas_df_path)
-            temp_df     = pd.read_csv(temp_df_path)
-            rh_df       = pd.read_csv(rh_df_path)
+            df_features = []
+
+            for i in datasets_features_paths:
+                df_features.append(pd.read_csv(i))
 
             debug("\nSucesso!", "green", debug_mode)
         except Exception as e:
@@ -28,11 +27,15 @@ class Gas_Analysis:
 
             sys.exit(0)
 
-        debug("\nInserindo campos de datetime, temperatura e umidade ao dataset em analise...\n", "blue", debug_mode)
-        self.set_datatime_col()
-        self.append_data_from_df(temp_df, "Value", "temp_value")
-        self.append_data_from_df(rh_df, "Value", "rh_value")
-        debug("Dataframe do poluente {} inicializado com sucesso!".format(config["gas_name"][self.gas_analysis]), "green", debug_mode)
+        debug("\nInserindo campos dados das features ao dataset em analise...\n", "blue", debug_mode)
+
+        i = 0
+        while i < len(datasets_features_names):
+            self.append_data_from_df(df_features[i], datasets_features_columns[i], datasets_features_names[i])
+
+            i += 1
+
+        # debug("Dataframe do poluente {} atualizado com sucesso!".format(config["gas_name"][self.gas_analysis]), "green", debug_mode)
 
     def remove_unused_columns(self, unused_columns_list):
         self.gas_df = self.gas_df.drop(unused_columns_list, axis=1)
@@ -48,7 +51,3 @@ class Gas_Analysis:
             self.gas_df.drop(self.gas_df.tail(len_diff).index, inplace = True)
 
         self.gas_df[new_column_id] = src_df[src_df_column]
-
-    def set_datatime_col(self):
-        date_time_col           = ['Year','Month','Day','Hour','Minute','Second']
-        self.gas_df['datetime'] = (pd.to_datetime(self.gas_df[date_time_col], infer_datetime_format=False, format='%d/%m/%Y/%H/%M/%S'))
