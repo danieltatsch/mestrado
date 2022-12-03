@@ -1,8 +1,4 @@
 {
-    "climatic_elements": {
-        "TEMP": "../alphasense_data/TEMP.CSV",
-        "RH":   "../alphasense_data/RH.CSV"
-    },
     "features_data": {
         "TEMP": ["../alphasense_data/TEMP.CSV", "Value"],
         "RH":   ["../alphasense_data/RH.CSV", "Value"]
@@ -33,5 +29,43 @@
         "O3_2": 20000
     },
     "moving_average_window": [60, 240, 720, 1440],
-    "default_unused_columns": ["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt", "SensorID"]
+    "default_unused_columns": ["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt", "SensorID"],
+    "dataset_test_size": 0.33,
+    "linear_regression_parameters": {
+        "feature_data": "TEMP"
+    },
+    "knn_parameters": {
+        "max_neighbors_analysis" : 25,
+        "loop_size": 10
+    },
+    "random_forest_parameters": {
+        "max_trees_analysis": 25,
+        "loop_size": 10
+    },
+    "svm_parameters": {
+        "loop_size": 10,
+        "kernel_function": "linear",
+        "C": 1.0
+    },
+    "ann_parameters": {
+        "epochs": 30,
+        "n_dense_layers": 1,
+        "dense_layers_size": [64],
+        "dropout_size": 0.2,
+        "activation_function": "relu",
+        "output_activation_function": "softmax",
+        "optimizer": "adam",
+        "loss": "sparse_categorical_crossentropy"
+    },
+    "knr_parameters": {
+        "max_neighbors_analysis" : 25,
+        "loop_size": 10,
+        "weight": "uniform"
+    },
+    "svr_parameters": {
+        "epsilon": 20,
+        "c_value_step": 500,
+        "max_c_value": 5,
+        "kernel_function": "rbf"
+    }
 }

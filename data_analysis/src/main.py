@@ -119,13 +119,16 @@ def main():
     gas_sensor = list(gas_options.items())[option - 1][0]
     gas_name   = gas_options[gas_sensor]
 
-    debug(f"\nGAS SELECIONADO: {gas_sensor} ({gas_name})", "green", True)
+    debug(f"\nGAS SELECIONADO: {gas_sensor} ({gas_name})\n", "green", True)
 
-    range_ppb      = config["gas_range_ppb"][gas_sensor]
-    backup_folder  = "backup_files"
-    output_folder  = f"output/{gas_sensor}"
-    df_pickle_path = "{}/{}_df_pickle".format(backup_folder, gas_sensor)
-    bkp_available  = os.path.exists(df_pickle_path)
+    range_ppb       = config["gas_range_ppb"][gas_sensor]
+    backup_folder   = "backup_files"
+    output_folder   = f"output/{gas_sensor}"
+    df_pickle_path  = "{}/{}_df_pickle".format(backup_folder, gas_sensor)
+    bkp_available   = os.path.exists(df_pickle_path)
+    split_test_size = config["dataset_test_size"]
+    target_value    = config["target_value"]
+    features_list   = list(config["features_data"].keys())
 
     if not os.path.exists("output/"):     os.makedirs("output/")
     if not os.path.exists(output_folder): os.makedirs(output_folder)
@@ -133,11 +136,8 @@ def main():
     gas_df = load_dataframe(config, gas_sensor, df_pickle_path, bkp_available)
     gas_df = pd.concat([gas_df, set_datatime_col(gas_df)], axis=1, join='inner')
 
-    target_value  = config["target_value"]
-    features_list = list(config["features_data"].keys())
-
     gas_analysis = Gas_Analysis(gas_df, config, gas_sensor, debug_mode)
-    gas_df = gas_analysis.gas_df
+    gas_df       = gas_analysis.gas_df
 
     apply_ma = confirm_info("Deseja realizar a analise considerando as medias moveis destacadas no arquivo de configuracao?")
 
@@ -210,22 +210,14 @@ def main():
         if lin_reg_option == 1:
             debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR SIMPLES", debug=debug_mode)
             
-            # features_list         = ["rh_value"]
-            features_list         = ["temp_value"]
-            # target_value = "Value"
+            features_list = config["linear_regression_parameters"]["feature_data"]
 
-            window_size = 60
-            # x = gas_df[f'ma_{window_size}_temp'].tolist()
-            # y = gas_df[f'ma_{window_size}_gas'].tolist()
             x = gas_df[features_list].values
             y = gas_df[target_value].values
-            # x = gas_df['rh_value'].tolist()
-
-            climatic_element = "_".join(features_list)
 
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             X_train = np.array(X_train)
             X_test = np.array(X_test)
@@ -290,17 +282,12 @@ def main():
         if lin_reg_option == 2:
             debug("INICIALIZANDO ANALISE POR REGRESSAO LINEAR MULTIPLA", debug=debug_mode)
             
-            # features_list         = ["temp_value", "rh_value"]
-            # target_value = "Value"
-
-            climatic_element = "_".join(features_list)
-
             x = gas_df[features_list].values
             y = gas_df[target_value].values
             
             debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             X_train = np.array(X_train)
             X_test = np.array(X_test)
@@ -354,19 +341,19 @@ def main():
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
-        neighbors         = 25
+        neighbors         = config["knn_parameters"]["max_neighbors_analysis"]
         neighbors         = np.arange(1,neighbors)
         test_accuracy_knn = np.empty(len(neighbors))
 
-        knn_accuracy_list         = []
-        k_variation 	          = []
+        knn_accuracy_list = []
+        k_variation 	  = []
 
-        max_tries = 10
+        max_tries = config["knn_parameters"]["loop_size"]
         i         = 0
         while i < max_tries:
             debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             for j,k in enumerate(neighbors):
                 knn = KNeighborsClassifier(n_neighbors=k)
@@ -418,7 +405,7 @@ def main():
         fig.savefig('{}/{}_{}.png'.format(output_knn_path, "knn", "variation"), dpi=fig.dpi)
 
     ###########################################################################################
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
         knn_classifier = KNeighborsClassifier(n_neighbors=most_repeated_k)
         knn_classifier.fit(X_train, y_train)
@@ -474,19 +461,19 @@ def main():
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
-        max_trees                   = 25
+        max_trees                   = config["random_forest_parameters"]["max_trees_analysis"]
         trees                       = np.arange(1,max_trees)
         test_accuracy_random_forest = np.empty(len(trees))
 
         rf_accuracy_list = []
         trees_variation  = []
 
-        max_tries = 10
+        max_tries = config["random_forest_parameters"]["loop_size"]
         i         = 0
         while i < max_tries:
             debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             for j,k in enumerate(trees):
                 random_forest = RandomForestClassifier(n_estimators=k)  
@@ -538,7 +525,7 @@ def main():
         fig.savefig('{}/{}_{}.png'.format(output_rf_path, "trees", "variation"), dpi=fig.dpi)
 
     ###########################################################################################
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
         rf_classifier = RandomForestClassifier(n_estimators=most_repeated_trees)
         rf_classifier.fit(X_train, y_train)
@@ -596,16 +583,18 @@ def main():
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
+        kernel_function   = config["kernel_function"]
+        reg_parameter     = config["C"]
+        max_tries         = config["loop_size"]
         svm_accuracy_list = []
 
-        max_tries = 10
         i         = 0
         while i < max_tries:
             debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
-            svm_classifier = SVC(kernel="linear")
+            svm_classifier = SVC(kernel=kernel_function, C=reg_parameter)
             svm_classifier.fit(X_train, y_train)
 
             svm_accuracy_list.append(svm_classifier.score(X_test, y_test))
@@ -621,9 +610,9 @@ def main():
 
         if not os.path.exists(output_svm_path): os.makedirs(output_svm_path)
     ###########################################################################################
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
-        svm_classifier = SVC(kernel="linear")
+        svm_classifier = SVC(kernel=kernel_function, C=reg_parameter)
         svm_classifier.fit(X_train, y_train)
 
         # from mlxtend.plotting import plot_decision_regions
@@ -685,16 +674,22 @@ def main():
         debug("-------------------------- REDES NEURAIS ARTIFICIAIS -----------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
+        n_epochs                   = config["ann_parameters"]["epochs"]
+        n_dense_layes              = config["ann_parameters"]["n_dense_layers"]
+        dense_layers_size          = config["ann_parameters"]["dense_layers_size"]
+        dropout_size               = config["ann_parameters"]["dropout_size"]
+        activation_function        = config["ann_parameters"]["activation_function"]
+        output_activation_function = config["ann_parameters"]["output_activation_function"]
+        optimizer_method           = config["ann_parameters"]["optimizer"]
+        ann_loss                   = config["ann_parameters"]["loss"]
+
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
         input_layer_size        = len(features_list)                                               # camada de entrada, igual a quantidade de features consideradas na analise
         output_dense_layer_size = 4                                                                # camada de saida, igual a quantidade de classes
-        # dense_layer_size        = pow(2,(math.ceil(input_layer_size + output_dense_layer_size)/2)) # quantidade de neuronios na camada densa
-        dense_layer_size        = 64                                                               # quantidade de neuronios na camada densa
-        n_epochs                = 30                                                               # quantiddade de vezes que o treinamento ira acontecer
 
         output_ann_path = f"{output_folder}/ann"
 
@@ -708,12 +703,24 @@ def main():
 
         debug(f"Pesos ajustados: {weights}", "green", debug_mode)
 
+        debug("\nCriando modelo...", "blue", debug_mode)
+
+        #############################################################################
+        ############################# Criacao do modelo #############################
+
         model = Sequential()
         model.add(InputLayer(input_shape=(input_layer_size,)))
-        model.add(Dense(dense_layer_size, activation= "relu"))
-        model.add(Dropout(0.2))
-        model.add(Dense(output_dense_layer_size, activation="softmax"))
-        
+
+        i = 0
+        while i < n_dense_layes:
+            model.add(Dense(dense_layers_size[i], activation=activation_function))
+            model.add(Dropout(dropout_size))
+            i += 1
+
+        model.add(Dense(output_dense_layer_size, activation=output_activation_function))
+
+        #############################################################################
+
         debug("Estrutura da Rede Neural", "cyan", debug_mode)
         model.summary()
         plot_model(model, to_file=f"{output_ann_path}/ann_model.png")
@@ -722,8 +729,7 @@ def main():
         metrics_list = [RootMeanSquaredError(), MeanAbsoluteError(), MeanSquaredError(), "accuracy"]
 
         debug("Compilando modelo da Rede Neural...", "blue", debug_mode)
-        # model.compile(optimizer="rmsprop", loss="sparse_categorical_crossentropy", metrics=metrics_list)
-        model.compile(optimizer="adam", loss="sparse_categorical_crossentropy", metrics=metrics_list)
+        model.compile(optimizer=optimizer_method, loss=ann_loss, metrics=metrics_list)
 
         debug("Sucesso!", "green", debug_mode)
         debug("Realizando treinamento...", "blue", debug_mode)
@@ -791,23 +797,22 @@ def main():
         x = gas_df[features_list].values
         y = gas_df[target_value].values
 
-        # knr_weight        = "distance"
-        knr_weight        = "uniform"
-        neighbors         = 25
+        knr_weight        = config["knr_parameters"]["weight"]
+        max_tries         = config["knn_parameters"]["loop_size"]
+        neighbors         = config["knr_parameters"]["max_neighbors_analysis"]
         neighbors         = np.arange(1,neighbors)
         test_accuracy_knr = np.empty(len(neighbors))
 
-        knr_accuracy_list         = []
-        k_variation 	          = []
+        knr_accuracy_list = []
+        k_variation 	  = []
 
         debug("Iniciando calibracao da quantidade de vizinhos proximos", "cyan", debug_mode)
 
-        max_tries = 10
-        i         = 0
+        i = 0
         while i < max_tries:
             debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             for j,k in enumerate(neighbors):
                 knr = KNeighborsRegressor(n_neighbors=k, weights=knr_weight)
@@ -847,7 +852,7 @@ def main():
         fig, ax1 = plt.subplots()
 
         ax1.set_title('k-NR variando numero de vizinhos proximos', size=25)
-        ax1.plot(neighbors, test_accuracy_knr, label='Acuracia K-NN')
+        ax1.plot(neighbors, test_accuracy_knr, label='Acuracia K-NR')
         ax1.set_xlabel('Numero de vizinhos proximos', size=25)
         ax1.set_ylabel('Acuracia', size=25)
         plt.grid()
@@ -860,7 +865,7 @@ def main():
     ###########################################################################################
         debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
         debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
 
@@ -918,18 +923,19 @@ def main():
 
         if not os.path.exists(output_svr_path): os.makedirs(output_svr_path)
 
-        debug("\nCalibrando parametro de regularizacao (C)...", "cyan", debug_mode)
-
-        N                        = 500
-        c_array                  = np.linspace(0.1, 5, N)
-        svr_epsilon              = 20
-        svr_kernel_func          = "rbf"
+        N               = config["svr_parameters"]["c_value_step"]
+        max_c_value     = config["svr_parameters"]["max_c_value"]
+        svr_epsilon     = config["svr_parameters"]["epsilon"]
+        svr_kernel_func = config["svr_parameters"]["kernel_function"]
+        
+        c_array                  = np.linspace(0.1, max_c_value, N)
         test_mae_list            = []
         perc_within_epsilon_list = []
 
+        debug("\nCalibrando parametro de regularizacao (C)...", "cyan", debug_mode)
         for c in c_array:
             # debug(f"Aplicando C = {c}")
-            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+            X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
             svr_regressor = SVR(kernel=svr_kernel_func, C=c, epsilon=svr_epsilon) if svr_kernel_func != "linear" else LinearSVR(C=c, epsilon=svr_epsilon)
             svr_regressor.fit(X_train, y_train)
@@ -969,7 +975,7 @@ def main():
 
         debug("\nSeparando dados de treinamento e teste...", "cyan", debug_mode)
 
-        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
+        X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=split_test_size, random_state=42)
 
         debug("\nCriando modelo de regressao com dados de treinamento", "cyan", debug_mode)
 
