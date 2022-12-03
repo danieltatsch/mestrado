@@ -69,21 +69,21 @@ def set_datatime_col(gas_df):
 
     return date_time_df
 
-def plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
-    # x     = gas_df_ma["datetime"]
-    # data1 = gas_df_ma["ma_gas"]
-    # data2 = gas_df_ma["temp_value"]
-    # data3 = gas_df_ma["ma_rh"]
+def get_comparsion_graph (gas_df, gas_sensor, target_value, features_list, output_folder):
+    x     = gas_df["datetime"]
+    data1 = gas_df[target_value]
 
-    # climatic_element = "TEMP"
-    # # climatic_element = "RH"
-    # title       = 'Média móvel: {} [ppb] x {}'.format(gas_sensor, climatic_element)
-    # x_label     = 'Data'
-    # data1_label = '{} - concentração [ppb]'.format(gas_sensor)
-    # data2_label = 'RH [%]' if climatic_element == 'RH' else 'TEMP [ºC]'
+    for i in features_list:
+        data2 = gas_df[i]
 
-    # plot_double(x, data1, data2, title, x_label, data1_label, data2_label)
+        plt_title    = f"{gas_sensor} X {i}"
+        plt_x_label  = "Data"
+        plt_d1_label = f"{gas_sensor} - concentração [ppb]"
+        plt_d2_label = "Temperatura [°C]" if i == "TEMP" else "Umidade relativa [%]" if i == "RH" else i
 
+        plot_double(output_folder, x, data1, data2, plt_title, plt_x_label, plt_d1_label, plt_d2_label)
+
+def plot_double(output_folder, x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
     fig, ax1 = plt.subplots()
     ax1.set_title(title, size=25)
     color = 'tab:blue'
@@ -108,3 +108,5 @@ def plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_lab
 
     fig.tight_layout()
     plt.show()
+
+    fig.savefig(f"{output_folder}/{title}.png")

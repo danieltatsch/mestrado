@@ -131,16 +131,12 @@ def main():
     if not os.path.exists(output_folder): os.makedirs(output_folder)
 
     gas_df = load_dataframe(config, gas_sensor, df_pickle_path, bkp_available)
-    # gas_df = gas_df.append(set_datatime_col(gas_df), ignore_index = True)
     gas_df = pd.concat([gas_df, set_datatime_col(gas_df)], axis=1, join='inner')
 
     target_value  = config["target_value"]
     features_list = list(config["features_data"].keys())
 
-    print(gas_df.shape)
     gas_analysis = Gas_Analysis(gas_df, config, gas_sensor, debug_mode)
-    # gas_df       = gas_df.append(gas_analysis.gas_df, ignore_index=True)
-    # gas_df       = pd.concat([gas_df, gas_analysis.gas_df], axis=1, join='inner')
     gas_df = gas_analysis.gas_df
 
     apply_ma = confirm_info("Deseja realizar a analise considerando as medias moveis destacadas no arquivo de configuracao?")
@@ -158,7 +154,6 @@ def main():
         ma_window               = ma_windows_list[get_number_by_range(1, i) - 1]
         ma_df, new_columns_list = apply_moving_average(gas_df, ma_window, target_value, features_list)
         
-        # gas_df        = gas_df.append(ma_df, ignore_index=True)
         gas_df        = pd.concat([gas_df, ma_df], axis=1, join='inner')
         target_value  = new_columns_list[-1]
         features_list = new_columns_list[:-1]
@@ -166,12 +161,7 @@ def main():
     gas_df = gas_df.dropna().copy()
     gas_df = init_gas_analysys(gas_df, gas_sensor, range_ppb, backup_folder, df_pickle_path, output_folder, target_value, features_list, debug_mode)
 
-    # # Teste plot
-    # x     = gas_df["datetime"]
-    # data1 = gas_df["Value"]
-    # data2 = gas_df["temp_value"]
-
-    # plot_double(x, data1, data2, title='', x_label='', data1_label='', data2_label='')
+    get_comparsion_graph(gas_df, gas_sensor, target_value, features_list, output_folder)
 
     input_text   = "Selecao do algoritmo de analise:\n"
     options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Sair"]
@@ -183,12 +173,14 @@ def main():
     categorical_values_list = []
 
     for v in values_list:
-        if   v >= sts["75%"]: categorical_values_list.append("alert")
-        elif v >= sts["50%"]: categorical_values_list.append("high")
-        elif v >= sts["25%"]: categorical_values_list.append("moderate")
-        else:                 categorical_values_list.append("low")
+        if   v >= sts["75%"]: categorical_values_list.append(3) #alert
+        elif v >= sts["50%"]: categorical_values_list.append(2) #high
+        elif v >= sts["25%"]: categorical_values_list.append(1) #moderate
+        else:                 categorical_values_list.append(0) #low
 
     gas_df["categorical_values"] = categorical_values_list
+    
+    climatic_element = "_".join(features_list)
 
     debug("Amostra de dados do dataset:\n", "yellow", debug_mode)
     debug(gas_df.head(), "cyan", debug_mode)
@@ -359,23 +351,6 @@ def main():
         debug("---------------------------- K-NEAREST NEIGHBORS ---------------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-        # features_list         = ["temp_value", "rh_value"]
-        # target_value = "Value"
-
-        climatic_element = "_".join(features_list)
-
-        values_list             = gas_df[target_value].tolist()
-        # values_list             = gas_df["ma_60_gas"].tolist()
-        categorical_values_list = []
-
-        for v in values_list:
-            if   v >= sts["75%"]: categorical_values_list.append(3)
-            elif v >= sts["50%"]: categorical_values_list.append(2)
-            elif v >= sts["25%"]: categorical_values_list.append(1)
-            else:                 categorical_values_list.append(0)
-
-        gas_df["categorical_values"] = categorical_values_list
-
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
@@ -495,23 +470,6 @@ def main():
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("------------------------------- RANDOM FOREST ------------------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
-
-        # features_list         = ["temp_value", "rh_value"]
-        # target_value = "Value"
-
-        climatic_element = "_".join(features_list)
-
-        values_list             = gas_df[target_value].tolist()
-        # values_list             = gas_df["ma_60_gas"].tolist()
-        categorical_values_list = []
-
-        for v in values_list:
-            if   v >= sts["75%"]: categorical_values_list.append(3)
-            elif v >= sts["50%"]: categorical_values_list.append(2)
-            elif v >= sts["25%"]: categorical_values_list.append(1)
-            else:                 categorical_values_list.append(0)
-
-        gas_df["categorical_values"] = categorical_values_list
 
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
@@ -635,24 +593,6 @@ def main():
         debug("--------------------------- SUPPORT VECTOR MACHINE -------------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-        # features_list         = ["temp_value", "rh_value"]
-        # # features_list         = ["temp_value"]
-        # target_value = "Value"
-
-        climatic_element = "_".join(features_list)
-
-        values_list             = gas_df[target_value].tolist()
-        # values_list             = gas_df["ma_60_gas"].tolist()
-        categorical_values_list = []
-
-        for v in values_list:
-            if   v >= sts["75%"]: categorical_values_list.append(3)
-            elif v >= sts["50%"]: categorical_values_list.append(2)
-            elif v >= sts["25%"]: categorical_values_list.append(1)
-            else:                 categorical_values_list.append(0)
-
-        gas_df["categorical_values"] = categorical_values_list
-
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
@@ -745,34 +685,8 @@ def main():
         debug("-------------------------- REDES NEURAIS ARTIFICIAIS -----------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-        # features_list         = ["temp_value", "rh_value"]
-        # # features_list         = ["temp_value"]
-        # target_value = "Value"
-
-        # x = gas_df[[climatic_element, "rh_value"]].values
         x = gas_df[features_list].values
-        y = gas_df[target_value].values
-        # x = gas_df[["ma_60_temp", "ma_60_rh"]].values
-        # y = gas_df["categorical_values"].values
-
-        climatic_element = "_".join(features_list)
-
-        values_list             = gas_df[target_value].tolist()
-        # values_list             = gas_df["ma_60_gas"].tolist()
-        categorical_values_list = []
-
-        for v in values_list:
-            if   v >= sts["75%"]: categorical_values_list.append(3)
-            elif v >= sts["50%"]: categorical_values_list.append(2)
-            elif v >= sts["25%"]: categorical_values_list.append(1)
-            else:                 categorical_values_list.append(0)
-
-        gas_df["categorical_values"] = categorical_values_list
-
-        predict_class = "categorical_values"
-    
-        x = gas_df[features_list].values
-        y = gas_df[predict_class].values
+        y = gas_df["categorical_values"].values
 
         X_train, X_test, y_train, y_test = train_test_split(x, y, test_size=0.33, random_state=42)
 
@@ -874,17 +788,8 @@ def main():
         debug("---------------------------- K-NEAREST REGRESSION---------------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-        # features_list         = ["temp_value", "rh_value"]
-        # features_list         = ["rh_value"]
-        # target_value = "Value"
-
-        # x = gas_df[[climatic_element, "rh_value"]].values
         x = gas_df[features_list].values
         y = gas_df[target_value].values
-        # x = gas_df[["ma_60_temp", "ma_60_rh"]].values
-        # y = gas_df["categorical_values"].values
-
-        climatic_element = "_".join(features_list)
 
         # knr_weight        = "distance"
         knr_weight        = "uniform"
@@ -1006,17 +911,8 @@ def main():
         debug("-------------------------- SUPPORT VECTOR REGRESSION -----------------------", "cyan", debug_mode)
         debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
-        # features_list         = ["temp_value", "rh_value"]
-        # # features_list         = ["temp_value"]
-        # target_value = "Value"
-
-        # x = gas_df[[climatic_element, "rh_value"]].values
         x = gas_df[features_list].values
         y = gas_df[target_value].values
-        # x = gas_df[["ma_60_temp", "ma_60_rh"]].values
-        # y = gas_df["categorical_values"].values
-
-        climatic_element = "_".join(features_list)
 
         output_svr_path = f"{output_folder}/svr"
 
@@ -1151,7 +1047,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, target_val
 
         statistics_raw[f'corr_gas_{i}'] = corr_gas_feature
 
-    pprint.pprint(statistics_raw)
+    # pprint.pprint(statistics_raw)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
     debug("Dados processados...", "cyan", debug_mode)
@@ -1169,7 +1065,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, target_val
 
         statistics_proc[f'corr_gas_{i}'] = corr_gas_feature
 
-    pprint.pprint(statistics_proc)
+    # pprint.pprint(statistics_proc)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
     debug("Removendo outliers".format(gas_sensor), "blue", debug_mode)
@@ -1185,7 +1081,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, target_val
 
         statistics_processed[f'corr_gas_{i}'] = corr_gas_feature
 
-    pprint.pprint(statistics_processed)
+    # pprint.pprint(statistics_processed)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
     output_file_raw       = "{}/statistics_raw_{}.json".format(output_folder, gas_sensor)
