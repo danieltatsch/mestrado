@@ -26,6 +26,7 @@ from tensorflow.keras.utils     import plot_model
 from sklearn.model_selection import train_test_split
 from sklearn.metrics 		 import confusion_matrix, classification_report
 from sklearn.utils           import class_weight
+from mlxtend.plotting        import plot_decision_regions
 
 debug_mode  = True
 config_path = "config.json"
@@ -583,12 +584,12 @@ def main():
         x = gas_df[features_list].values
         y = gas_df["categorical_values"].values
 
-        kernel_function   = config["kernel_function"]
-        reg_parameter     = config["C"]
-        max_tries         = config["loop_size"]
+        kernel_function   = config["svm_parameters"]["kernel_function"]
+        reg_parameter     = config["svm_parameters"]["C"]
+        max_tries         = config["svm_parameters"]["loop_size"]
         svm_accuracy_list = []
 
-        i         = 0
+        i = 0
         while i < max_tries:
             debug(f"INCIANDO LACO {i}\n", "yellow", debug_mode)
 
@@ -615,13 +616,20 @@ def main():
         svm_classifier = SVC(kernel=kernel_function, C=reg_parameter)
         svm_classifier.fit(X_train, y_train)
 
-        # from mlxtend.plotting import plot_decision_regions
+        fig, ax1 = plt.subplots()
 
-        # print(y_train)
+        if len(features_list) == 2:
+            x_label = "Temperatura [°C]" if features_list[0] == "TEMP" else features_list[0]
+            y_label = "Umidade relativa [%]" if features_list[1] == "RH" else features_list[1]
 
-        # # Plotting decision regions
-        # plot_decision_regions(X_train, y_train, clf=svm_classifier, legend=2)
-        # plt.show()
+            plot_decision_regions(X_train, y_train, clf=svm_classifier, legend=2)
+            
+            ax1.set_title('SVM - Regiões de decisão', size=25)
+            ax1.set_xlabel(x_label, size=25)
+            ax1.set_ylabel(y_label, size=25)
+            plt.show()
+
+            fig.savefig(f"{output_svm_path}/svm_decision_regions.png")
 
         svm_y_pred = svm_classifier.predict(X_test)
 
@@ -798,7 +806,7 @@ def main():
         y = gas_df[target_value].values
 
         knr_weight        = config["knr_parameters"]["weight"]
-        max_tries         = config["knn_parameters"]["loop_size"]
+        max_tries         = config["knr_parameters"]["loop_size"]
         neighbors         = config["knr_parameters"]["max_neighbors_analysis"]
         neighbors         = np.arange(1,neighbors)
         test_accuracy_knr = np.empty(len(neighbors))
