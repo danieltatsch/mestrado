@@ -6,8 +6,6 @@ from regressions  import *
 import matplotlib.pyplot as plt
 import numpy             as np
 
-import math
-import pprint
 import sys
 import os
 
@@ -235,35 +233,11 @@ def main():
 
             y_pred = regression_model.get_predict_data(X_test)
 
-            debug("\nObtendo metricas", "cyan", debug_mode)
-
-            slr_dict = {}
-
-            slr_dict["r2"]                 = regression_model.get_r2()
-            b0, b1                         = regression_model.get_coefficients()
-            slr_dict["coefficients"]       = {}
-            slr_dict["coefficients"]["b0"] = b0
-            slr_dict["coefficients"]["b1"] = b1[0]
-            slr_dict["mse"]                = get_MSE(y_test, y_pred)
-            slr_dict["rmse"]               = get_RMSE(y_test, y_pred)
-            slr_dict["mae"]                = get_MAE(y_test, y_pred)
-
-            debug(f'Coeficientes: {slr_dict["coefficients"]}', debug=debug_mode)
-            debug(f'R^2:  {slr_dict["r2"]}', debug=debug_mode)
-            debug(f'MSE:  {slr_dict["mse"]}', debug=debug_mode)
-            debug(f'RMSE: {slr_dict["rmse"]}', debug=debug_mode)
-            debug(f'MAE:  {slr_dict["mae"]}', debug=debug_mode)
-
             output_slr_path = f"{output_folder}/simple_linear_regression"
 
             if not os.path.exists(output_slr_path): os.makedirs(output_slr_path)
 
-            debug(f"\nSalvando metricas no diretorio: {output_slr_path}", "cyan", debug_mode)
-
-            dict_to_json_file(output_slr_path + "/metrics.json", slr_dict)
-            dict_to_json_file(output_slr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", slr_dict)
-
-            debug("SUCESSO!", "green", debug_mode)
+            get_metrics(y_test, y_pred, output_slr_path, "SLR", gas_sensor, climatic_element)
 
             fig, ax1 = plt.subplots()
             x_label  = "Temperatura [ºC]" if climatic_element == "temp_value" else "RH [%]" if climatic_element == "rh_value" else "feature variation"
@@ -305,35 +279,11 @@ def main():
 
             y_pred = regression_model.get_predict_data(X_test)
 
-            debug("\nObtendo metricas", "cyan", debug_mode)
-
-            mlr_dict = {}
-
-            mlr_dict["r2"]           = regression_model.get_r2()
-            b0, b1                   = regression_model.get_coefficients()
-            b1                       = b1[0].tolist()
-            mlr_dict["coefficients"] = {}
-            mlr_dict["coefficients"]["b0"] = b0[0]
-            mlr_dict["coefficients"]["b1"] = b1
-            mlr_dict["mse"]          = get_MSE(y_test, y_pred)
-            mlr_dict["rmse"]         = get_RMSE(y_test, y_pred)
-            mlr_dict["mae"]          = get_MAE(y_test, y_pred)
-
-            debug(f'Coeficientes: {mlr_dict["coefficients"]}', debug=debug_mode)
-            debug(f'R^2:  {mlr_dict["r2"]}', debug=debug_mode)
-            debug(f'MSE:  {mlr_dict["mse"]}', debug=debug_mode)
-            debug(f'RMSE: {mlr_dict["rmse"]}', debug=debug_mode)
-            debug(f'MAE:  {mlr_dict["mae"]}', debug=debug_mode)
-
             output_mlr_path = f"{output_folder}/multiple_linear_regression"
 
             if not os.path.exists(output_mlr_path): os.makedirs(output_mlr_path)
 
-            debug(f"\nSalvando metricas no diretorio: {output_mlr_path}", "cyan", debug_mode)
-
-            dict_to_json_file(output_mlr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", mlr_dict)
-
-            debug("SUCESSO!", "green", debug_mode)
+            get_metrics(y_test, y_pred, output_mlr_path, "MLR", gas_sensor, climatic_element)
     if option == 2:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("---------------------------- K-NEAREST NEIGHBORS ---------------------------", "cyan", debug_mode)
@@ -413,47 +363,7 @@ def main():
 
         knn_y_pred = knn_classifier.predict(X_test)
 
-        print("---------------------------------")
-        print("Matriz de confusao")
-        print(confusion_matrix(y_test, knn_y_pred))
-
-        print("---------------------------------")
-        print("Cross tab")
-        print(pd.crosstab(y_test, knn_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
-
-        print("---------------------------------")
-        print("Diagnostico de classificacao")
-        print(classification_report(y_test,knn_y_pred))
-
-        conf_matrix = confusion_matrix(y_true=y_test, y_pred=knn_y_pred)
-        fig, ax = plt.subplots(figsize=(7.5, 7.5))
-        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
-        for i in range(conf_matrix.shape[0]):
-            for j in range(conf_matrix.shape[1]):
-                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
-        
-        plt.xlabel('Predicao (classificacao)', fontsize=18)
-        plt.ylabel('Valor real', fontsize=18)
-        plt.title('Matriz de confusao - KNN', fontsize=18)
-        plt.show()
-        fig.savefig(f"{output_knn_path}/knn_confusion_matrix.png")
-
-        knn         = {}
-        knn["r2"]   = get_r2_score(y_test, knn_y_pred)
-        knn["mse"]  = get_MSE(y_test, knn_y_pred)
-        knn["rmse"] = get_RMSE(y_test, knn_y_pred)
-        knn["mae"]  = get_MAE(y_test, knn_y_pred)
-
-        debug(f'R^2:  {knn["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {knn["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {knn["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {knn["mae"]}', debug=debug_mode)
-        
-        debug(f"\nSalvando metricas no diretorio: {output_knn_path}", "cyan", debug_mode)
-
-        dict_to_json_file(output_knn_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knn)
-
-        debug("SUCESSO!", "green", debug_mode)
+        get_metrics(y_test, knn_y_pred, output_knn_path, "KNN", gas_sensor, climatic_element)
     if option == 3:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("------------------------------- RANDOM FOREST ------------------------------", "cyan", debug_mode)
@@ -533,49 +443,7 @@ def main():
 
         rf_y_pred = rf_classifier.predict(X_test)
 
-        print("---------------------------------")
-        print("Matriz de confusao")
-        print(confusion_matrix(y_test, rf_y_pred))
-
-        print("---------------------------------")
-        print("Cross tab")
-        print(pd.crosstab(y_test, rf_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
-
-        print("---------------------------------")
-        print("Diagnostico de classificacao")
-        print(classification_report(y_test,rf_y_pred))
-
-        conf_matrix = confusion_matrix(y_true=y_test, y_pred=rf_y_pred)
-        fig, ax = plt.subplots(figsize=(7.5, 7.5))
-        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
-        for i in range(conf_matrix.shape[0]):
-            for j in range(conf_matrix.shape[1]):
-                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
-        
-        plt.xlabel('Predicao (classificacao)', fontsize=18)
-        plt.ylabel('Valor real', fontsize=18)
-        plt.title('Matriz de confusao - Random Forest', fontsize=18)
-        plt.show()
-        fig.savefig(f"{output_rf_path}/rf_confusion_matrix.png")
-
-        debug("\nObtendo metricas", "cyan", debug_mode)
-
-        rf         = {}
-        rf["r2"]   = get_r2_score(y_test, rf_y_pred)
-        rf["mse"]  = get_MSE(y_test, rf_y_pred)
-        rf["rmse"] = get_RMSE(y_test, rf_y_pred)
-        rf["mae"]  = get_MAE(y_test, rf_y_pred)
-
-        debug(f'R^2:  {rf["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {rf["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {rf["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {rf["mae"]}', debug=debug_mode)
-        
-        debug(f"\nSalvando metricas no diretorio: {output_rf_path}", "cyan", debug_mode)
-
-        dict_to_json_file(output_rf_path + f"/metrics_{gas_sensor}_{climatic_element}.json", rf)
-
-        debug("SUCESSO!", "green", debug_mode)
+        get_metrics(y_test, rf_y_pred, output_rf_path, "RF", gas_sensor, climatic_element)
     if option == 4:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("--------------------------- SUPPORT VECTOR MACHINE -------------------------", "cyan", debug_mode)
@@ -633,50 +501,7 @@ def main():
 
         svm_y_pred = svm_classifier.predict(X_test)
 
-        print("---------------------------------")
-        print("Matriz de confusao")
-        print(confusion_matrix(y_test, svm_y_pred))
-
-        print("---------------------------------")
-        print("Cross tab")
-        print(pd.crosstab(y_test, svm_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
-
-        print("---------------------------------")
-        print("Diagnostico de classificacao")
-        print(classification_report(y_test,svm_y_pred))
-
-        conf_matrix = confusion_matrix(y_true=y_test, y_pred=svm_y_pred)
-        fig, ax = plt.subplots(figsize=(7.5, 7.5))
-        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
-
-        for i in range(conf_matrix.shape[0]):
-            for j in range(conf_matrix.shape[1]):
-                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
-        
-        plt.xlabel('Predicao (classificacao)', fontsize=18)
-        plt.ylabel('Valor real', fontsize=18)
-        plt.title('Matriz de confusao - SVM', fontsize=18)
-        plt.show()
-        fig.savefig(f"{output_svm_path}/svm_confusion_matrix.png")
-
-        debug("\nObtendo metricas", "cyan", debug_mode)
-
-        svm         = {}
-        svm["r2"]   = get_r2_score(y_test, svm_y_pred)
-        svm["mse"]  = get_MSE(y_test, svm_y_pred)
-        svm["rmse"] = get_RMSE(y_test, svm_y_pred)
-        svm["mae"]  = get_MAE(y_test, svm_y_pred)
-
-        debug(f'R^2:  {svm["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {svm["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {svm["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {svm["mae"]}', debug=debug_mode)
-        
-        debug(f"\nSalvando metricas no diretorio: {output_svm_path}", "cyan", debug_mode)
-
-        dict_to_json_file(output_svm_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svm)
-
-        debug("SUCESSO!", "green", debug_mode)
+        get_metrics(y_test, svm_y_pred, output_svm_path, "SVM", gas_sensor, climatic_element)
     if option == 5:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("-------------------------- REDES NEURAIS ARTIFICIAIS -----------------------", "cyan", debug_mode)
@@ -754,49 +579,7 @@ def main():
 
         ann_y_pred = np.argmax(ann_model.predict(X_test), axis=-1)
 
-        print("\n---------------------------------")
-        print("Matriz de confusao")
-        print(confusion_matrix(y_test, ann_y_pred))
-
-        print("---------------------------------")
-        print("Cross tab")
-        print(pd.crosstab(y_test, ann_y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
-
-        print("---------------------------------")
-        print("Diagnostico de classificacao")
-        print(classification_report(y_test, ann_y_pred))
-
-        conf_matrix = confusion_matrix(y_true=y_test, y_pred=ann_y_pred)
-        fig, ax = plt.subplots(figsize=(7.5, 7.5))
-        ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
-        for i in range(conf_matrix.shape[0]):
-            for j in range(conf_matrix.shape[1]):
-                ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
-        
-        plt.xlabel('Predicao (classificacao)', fontsize=18)
-        plt.ylabel('Valor real', fontsize=18)
-        plt.title('Matriz de confusao - Rede Neural Artificial', fontsize=18)
-        plt.show()
-        fig.savefig(f"{output_ann_path}/ann_confusion_matrix.png")
-
-        debug("\nObtendo metricas", "cyan", debug_mode)
-
-        ann         = {}
-        ann["r2"]   = get_r2_score(y_test, ann_y_pred)
-        ann["mse"]  = get_MSE(y_test, ann_y_pred)
-        ann["rmse"] = get_RMSE(y_test, ann_y_pred)
-        ann["mae"]  = get_MAE(y_test, ann_y_pred)
-
-        debug(f'R^2:  {ann["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {ann["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {ann["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {ann["mae"]}', debug=debug_mode)
-        
-        debug(f"\nSalvando metricas no diretorio: {output_ann_path}", "cyan", debug_mode)
-
-        dict_to_json_file(output_ann_path + f"/metrics_{gas_sensor}_{climatic_element}.json", ann)
-
-        debug("SUCESSO!", "green", debug_mode)
+        get_metrics(y_test, ann_y_pred, output_ann_path, "ANN", gas_sensor, climatic_element)
     if option == 6:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("---------------------------- K-NEAREST REGRESSION---------------------------", "cyan", debug_mode)
@@ -901,24 +684,7 @@ def main():
 
             fig.savefig('{}/{}_{}_{}.png'.format(output_knr_path, "knr", "prediction", climatic_element), dpi=fig.dpi)
 
-        debug("\nObtendo metricas", "cyan", debug_mode)
-
-        knr         = {}
-        knr["r2"]   = get_r2_score(y_test, knr_y_pred)
-        knr["mse"]  = get_MSE(y_test, knr_y_pred)
-        knr["rmse"] = get_RMSE(y_test, knr_y_pred)
-        knr["mae"]  = get_MAE(y_test, knr_y_pred)
-
-        debug(f'R^2:  {knr["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {knr["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {knr["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {knr["mae"]}', debug=debug_mode)
-        
-        debug(f"\nSalvando metricas no diretorio: {output_knr_path}", "cyan", debug_mode)
-
-        dict_to_json_file(output_knr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", knr)
-
-        debug("SUCESSO!", "green", debug_mode)
+        get_metrics(y_test, knr_y_pred, output_knr_path, "KNR", gas_sensor, climatic_element)
     if option == 7:
         debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
         debug("-------------------------- SUPPORT VECTOR REGRESSION -----------------------", "cyan", debug_mode)
@@ -1020,30 +786,52 @@ def main():
 
             fig.savefig('{}/{}_{}_{}.png'.format(output_svr_path, "svr", "prediction", climatic_element), dpi=fig.dpi)
 
+        get_metrics(y_test, svr_y_pred, output_svr_path, "SVR", gas_sensor, climatic_element)
+
+def get_metrics(y_test, y_pred, output_folder, algorithm, gas_sensor, climatic_element, debug_mode=True):
+        if algorithm not in ["SVR", "SLR", "MLR", "KNR"]:
+            print("---------------------------------")
+            print("Matriz de confusao")
+            print(confusion_matrix(y_test, y_pred))
+
+            print("---------------------------------")
+            print("Cross tab")
+            print(pd.crosstab(y_test, y_pred, rownames=['True'], colnames=['Predicted'], margins=True))
+
+            print("---------------------------------")
+            print("Diagnostico de classificacao")
+            print(classification_report(y_test,y_pred))
+
+            conf_matrix = confusion_matrix(y_true=y_test, y_pred=y_pred)
+            fig, ax = plt.subplots(figsize=(7.5, 7.5))
+            ax.matshow(conf_matrix, cmap=plt.cm.Blues, alpha=0.3)
+
+            for i in range(conf_matrix.shape[0]):
+                for j in range(conf_matrix.shape[1]):
+                    ax.text(x=j, y=i,s=conf_matrix[i, j], va='center', ha='center', size='xx-large')
+            
+            plt.xlabel('Predicao (classificacao)', fontsize=18)
+            plt.ylabel('Valor real', fontsize=18)
+            plt.title(f'Matriz de confusao - {algorithm}', fontsize=18)
+            plt.show()
+            fig.savefig(f"{output_folder}/{algorithm}_confusion_matrix.png")
+
         debug("\nObtendo metricas", "cyan", debug_mode)
 
-        svr         = {}
-        svr["r2"]   = get_r2_score(y_test, svr_y_pred)
-        svr["mse"]  = get_MSE(y_test, svr_y_pred)
-        svr["rmse"] = get_RMSE(y_test, svr_y_pred)
-        svr["mae"]  = get_MAE(y_test, svr_y_pred)
+        metrics         = {}
+        metrics["r2"]   = get_r2_score(y_test, y_pred)
+        metrics["mse"]  = get_MSE(y_test, y_pred)
+        metrics["rmse"] = get_RMSE(y_test, y_pred)
+        metrics["mae"]  = get_MAE(y_test, y_pred)
 
-        if svr_kernel_func == "linear":
-            svr["coefficients"]              = {}
-            svr["coefficients"]["intercept"] = svr_regressor.intercept_.tolist()
-            svr["coefficients"]["coefs"]     = svr_regressor.coef_.tolist()
-
-            debug(f"Intercept:   {svr_regressor.intercept_}", debug=debug_mode)
-            debug(f"Coefficient: {svr_regressor.coef_}", debug=debug_mode)
-
-        debug(f'R^2:  {svr["r2"]}', debug=debug_mode)
-        debug(f'MSE:  {svr["mse"]}', debug=debug_mode)
-        debug(f'RMSE: {svr["rmse"]}', debug=debug_mode)
-        debug(f'MAE:  {svr["mae"]}', debug=debug_mode)
+        debug(f'R^2:  {metrics["r2"]}', debug=debug_mode)
+        debug(f'MSE:  {metrics["mse"]}', debug=debug_mode)
+        debug(f'RMSE: {metrics["rmse"]}', debug=debug_mode)
+        debug(f'MAE:  {metrics["mae"]}', debug=debug_mode)
         
-        debug(f"\nSalvando metricas no diretorio: {output_svr_path}", "cyan", debug_mode)
+        debug(f"\nSalvando metricas no diretorio: {output_folder}", "cyan", debug_mode)
 
-        dict_to_json_file(output_svr_path + f"/metrics_{gas_sensor}_{climatic_element}.json", svr)
+        dict_to_json_file(output_folder + f"/metrics_{gas_sensor}_{climatic_element}.json", metrics)
 
         debug("SUCESSO!", "green", debug_mode)
 
@@ -1095,7 +883,6 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, target_val
 
         statistics_processed[f'corr_gas_{i}'] = corr_gas_feature
 
-    # pprint.pprint(statistics_processed)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
     output_file_raw       = "{}/statistics_raw_{}.json".format(output_folder, gas_sensor)
@@ -1106,7 +893,7 @@ def remove_invalid_data(gas_df, range_ppb, gas_sensor, output_folder, target_val
 
     return gas_df_processed_out
 
-def get_statistics_data(gas_value, range_ppb):
+def get_statistics_data(gas_value, range_ppb, debug_mode=True):
     debug("\nContando dados fora dos limiares", "blue", debug_mode)
     greatter_than_range_count, less_than_zero_count = count_values_outside_range(gas_value, range_ppb)
 
