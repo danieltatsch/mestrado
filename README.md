@@ -1,2 +1,2 @@
 # mestrado
-Repositório destinado às atividades desenvolvidas nas disciplinas cursadas no Mestrado em Computação Aplicada (Univali).
+Activities developed in the disciplines studied in the Masters Degree - Applied Computing Science (Univali).
