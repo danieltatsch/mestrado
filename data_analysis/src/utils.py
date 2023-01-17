@@ -20,7 +20,7 @@ def dict_to_json_file(out_file_name, out_dict):
         json.dump(out_dict, fp, indent=2)
 
 def load_config(config_path, debug_mode):
-    debug("Abrindo arquivo de configuracao...", "blue", debug_mode)
+    debug("Opening config file...", "blue", debug_mode)
     config = open_json_file(config_path)
 
     if not config:
@@ -45,7 +45,7 @@ def confirm_info(text=None):
         debug("\nEntrada invalida!", "red", True)
 
 def get_number_by_range(lower_th, upper_th, text=None):
-    input_text = text if text is not None else f"Selecione um numero entre {lower_th} e {upper_th}: "
+    input_text = text if text is not None else f"Insert a number between {lower_th} and {upper_th}: "
 
     option = -1
     while True:
@@ -77,15 +77,16 @@ def get_comparsion_graph (gas_df, gas_sensor, target_value, features_list, outpu
         data2 = gas_df[i]
 
         plt_title    = f"{gas_sensor} X {i}"
-        plt_x_label  = "Data"
-        plt_d1_label = f"{gas_sensor} - concentração [ppb]"
-        plt_d2_label = "Temperatura [°C]" if i == "TEMP" else "Umidade relativa [%]" if i == "RH" else i
+        plt_x_label  = "Date"
+        plt_d1_label = f"{gas_sensor} - concentration [ppb]"
+        # plt_d2_label = "Temperature [°C]" if i == "TEMP" else "Relative Humidity [%]" if i == "RH" else i
+        plt_d2_label = "Temperature [°C]" if "TEMP" in i else "Relative Humidity [%]" if "RH" in i else i
 
         plot_double(output_folder, x, data1, data2, plt_title, plt_x_label, plt_d1_label, plt_d2_label)
 
 def plot_double(output_folder, x, data1, data2, title='', x_label='', data1_label='', data2_label=''):
     fig, ax1 = plt.subplots()
-    ax1.set_title(title, size=25)
+    # ax1.set_title(title, size=25)
     color = 'tab:blue'
     ax1.set_xlabel(x_label, size=25)
     ax1.set_ylabel(data1_label, color=color, size=25)

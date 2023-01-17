@@ -5,12 +5,12 @@
     },
     "target_value": "Value",
     "gas_name": {
-        "CO":   "Monoxido de carbono",
-        "H2S":  "Sulfeto de hidrogenio",
-        "NO2":  "Dioxido de nitrogenio",
-        "SO2":  "Dioxido de enxofre",
-        "O3":   "Ozonio",
-        "O3_2": "Ozonio"
+        "CO":   "Carbon monoxide",
+        "H2S":  "Hydrogen sulfide",
+        "NO2":  "Nitrogen dioxide",
+        "SO2":  "Sulfur dioxide",
+        "O3":   "Ozone",
+        "O3_2": "Ozone"
     },
     "gas_sensors": {
         "CO":   "../alphasense_data/ISB_CO.CSV",
@@ -63,7 +63,7 @@
         "weight": "uniform"
     },
     "svr_parameters": {
-        "epsilon": 20,
+        "epsilon": 0.1,
         "c_value_step": 500,
         "max_c_value": 5,
         "kernel_function": "rbf"

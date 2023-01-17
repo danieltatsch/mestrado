@@ -12,7 +12,7 @@ class Gas_Analysis:
         datasets_features_paths   = [features_data[k][0] for k in datasets_features_names]
         datasets_features_columns = [features_data[k][1] for k in datasets_features_names]
 
-        debug("Inicializando dataframes das features...", "blue", debug_mode)
+        debug("Starting features dataframes...", "blue", debug_mode)
 
         try:
             df_features = []
@@ -20,14 +20,14 @@ class Gas_Analysis:
             for i in datasets_features_paths:
                 df_features.append(pd.read_csv(i))
 
-            debug("\nSucesso!", "green", debug_mode)
+            debug("Success!", "green", debug_mode)
         except Exception as e:
             debug("\nFalha ao carregar datasets!", "red", debug_mode)
             print(e)
 
             sys.exit(0)
 
-        debug("\nInserindo campos dados das features ao dataset em analise...\n", "blue", debug_mode)
+        debug("\nAdding features data to the pollutant dataset...", "blue", debug_mode)
 
         i = 0
         while i < len(datasets_features_names):

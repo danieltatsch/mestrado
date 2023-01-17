@@ -42,12 +42,12 @@ def load_dataframe(config, gas_sensor, df_pickle_path, bkp_available):
     # else:
     gas_df_path  = config["gas_sensors"][gas_sensor]
 
-    debug(f"Inicializando dataframe a partir do arquivo {gas_df_path}", "blue", debug_mode)
+    debug(f"Starting dataframe from {gas_df_path} file", "blue", debug_mode)
 
     try:
         gas_df = pd.read_csv(gas_df_path)
 
-        debug("Sucesso!\n", "green", debug_mode)
+        debug("Success!\n", "green", debug_mode)
     except Exception as e:
         debug("Falha ao carregar dataset!\n", "red", debug_mode)
         print(e)
@@ -61,7 +61,7 @@ def apply_moving_average(gas_df_raw, ma_window, target_value, features_list):
     df_columns_list = features_list.copy()
     df_columns_list.append(target_value)
 
-    debug(f"\nRealizando calculo da media movel com a janela de {ma_window} pontos", "cyan", debug_mode)
+    debug(f"\nApply moving average window = {ma_window}", "cyan", debug_mode)
 
     new_columns_list = []
 
@@ -95,13 +95,13 @@ def init_gas_analysys(gas_df_raw, gas_sensor, range_ppb, backup_folder, df_pickl
 
 def main():
     debug("\n----------------------------------------------------------------------------", "cyan", debug_mode)
-    debug("----------------------- INICIALIZACAO DO EXPERIMENTO -----------------------", "cyan", debug_mode)
+    debug("-------------------------- INITIALIZING EXPERIMENT -------------------------", "cyan", debug_mode)
     debug("----------------------------------------------------------------------------\n", "cyan", debug_mode)
 
     config      = load_config(config_path, debug_mode)
     gas_options = config["gas_name"]
 
-    print("\nSelecao do gas para analise:\n")
+    print("\nGas selection for analysis:")
 
     i = 1
     for key in gas_options:
@@ -109,7 +109,7 @@ def main():
 
         print(f"{i} - {key} ({description})")
         i += 1
-    print(f"{i} - Sair")
+    print(f"{i} - Exit")
     
     option = get_number_by_range(1, i)
 
@@ -118,7 +118,7 @@ def main():
     gas_sensor = list(gas_options.items())[option - 1][0]
     gas_name   = gas_options[gas_sensor]
 
-    debug(f"\nGAS SELECIONADO: {gas_sensor} ({gas_name})\n", "green", True)
+    debug(f"\nSELECTED GAS: {gas_sensor} ({gas_name})\n", "green", True)
 
     range_ppb       = config["gas_range_ppb"][gas_sensor]
     backup_folder   = "backup_files"
@@ -138,7 +138,7 @@ def main():
     gas_analysis = Gas_Analysis(gas_df, config, gas_sensor, debug_mode)
     gas_df       = gas_analysis.gas_df
 
-    apply_ma = confirm_info("Deseja realizar a analise considerando as medias moveis destacadas no arquivo de configuracao?")
+    apply_ma = confirm_info("Apply moving average windows available in the config file?")
 
     if apply_ma:
         ma_windows_list = config["moving_average_window"]
@@ -163,7 +163,7 @@ def main():
     get_comparsion_graph(gas_df, gas_sensor, target_value, features_list, output_folder)
 
     input_text   = "Selecao do algoritmo de analise:\n"
-    options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Sair"]
+    options_list = ["1) Regressoes lineares", "2) K-Nearest Neighbors", "3) Random Forest", "4) Support Vector Machine", "5) Redes Neurais Artificiais", "6) K-Nearest Regression", "7) Support Vector Regression", "8) Exit"]
 
     sts_path = f"{output_folder}/statistics_processed_{gas_sensor}.json"
     sts      = open_json_file(sts_path)
@@ -487,12 +487,14 @@ def main():
         fig, ax1 = plt.subplots()
 
         if len(features_list) == 2:
-            x_label = "Temperatura [°C]" if features_list[0] == "TEMP" else features_list[0]
-            y_label = "Umidade relativa [%]" if features_list[1] == "RH" else features_list[1]
+            x_label = "Temperature [°C]"
+            # x_label = "Temperature [°C]" if features_list[0] == "TEMP" else features_list[0]
+            y_label = "Relative Humidity [%]"
+            # y_label = "Relative Humidity [%]" if features_list[1] == "RH" else features_list[1]
 
             plot_decision_regions(X_train, y_train, clf=svm_classifier, legend=2)
             
-            ax1.set_title('SVM - Regiões de decisão', size=25)
+            # ax1.set_title('SVM - Decision regions', size=25)
             ax1.set_xlabel(x_label, size=25)
             ax1.set_ylabel(y_label, size=25)
             plt.show()
