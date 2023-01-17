@@ -1,0 +1,71 @@
+{
+    "features_data": {
+        "TEMP": ["../alphasense_data/TEMP.CSV", "Value"],
+        "RH":   ["../alphasense_data/RH.CSV", "Value"]
+    },
+    "target_value": "Value",
+    "gas_name": {
+        "CO":   "Monoxido de carbono",
+        "H2S":  "Sulfeto de hidrogenio",
+        "NO2":  "Dioxido de nitrogenio",
+        "SO2":  "Dioxido de enxofre",
+        "O3":   "Ozonio",
+        "O3_2": "Ozonio"
+    },
+    "gas_sensors": {
+        "CO":   "../alphasense_data/ISB_CO.CSV",
+        "H2S":  "../alphasense_data/ISB_H2S.CSV",
+        "NO2":  "../alphasense_data/ISB_NO2.CSV",
+        "SO2":  "../alphasense_data/ISB_SO2.CSV",
+        "O3":   "../alphasense_data/ISB_O3.CSV",
+        "O3_2": "../alphasense_data/ISB_O3_2.CSV"
+    },
+    "gas_range_ppb": {
+        "CO":   1000000,
+        "H2S":  100000,
+        "NO2":  20000,
+        "SO2":  100000,
+        "O3":   20000,
+        "O3_2": 20000
+    },
+    "moving_average_window": [60, 240, 720, 1440],
+    "default_unused_columns": ["Year", "Month", "Day", "Hour", "Minute", "Second", "Latitude", "Longitude", "Altitude", "Device", "DeviceSt", "SensorID"],
+    "dataset_test_size": 0.33,
+    "linear_regression_parameters": {
+        "feature_data": "TEMP"
+    },
+    "knn_parameters": {
+        "max_neighbors_analysis" : 25,
+        "loop_size": 10
+    },
+    "random_forest_parameters": {
+        "max_trees_analysis": 25,
+        "loop_size": 10
+    },
+    "svm_parameters": {
+        "loop_size": 10,
+        "kernel_function": "linear",
+        "C": 1.0
+    },
+    "ann_parameters": {
+        "epochs": 30,
+        "n_dense_layers": 1,
+        "dense_layers_size": [64],
+        "dropout_size": 0.2,
+        "activation_function": "relu",
+        "output_activation_function": "softmax",
+        "optimizer": "adam",
+        "loss": "sparse_categorical_crossentropy"
+    },
+    "knr_parameters": {
+        "max_neighbors_analysis" : 25,
+        "loop_size": 10,
+        "weight": "uniform"
+    },
+    "svr_parameters": {
+        "epsilon": 20,
+        "c_value_step": 500,
+        "max_c_value": 5,
+        "kernel_function": "rbf"
+    }
+}
